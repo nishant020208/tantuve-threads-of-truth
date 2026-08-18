@@ -14,16 +14,336 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      disputes: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          reason: string
+          reporter_contact: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          reason: string
+          reporter_contact?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          reason?: string
+          reporter_contact?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gi_registry: {
+        Row: {
+          craft_type: string
+          created_at: string
+          official_description: string
+          region: string
+        }
+        Insert: {
+          craft_type: string
+          created_at?: string
+          official_description: string
+          region: string
+        }
+        Update: {
+          craft_type?: string
+          created_at?: string
+          official_description?: string
+          region?: string
+        }
+        Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          actor: string | null
+          entry_hash: string
+          id: string
+          previous_entry_hash: string | null
+          product_id: string
+          seq: number
+          step_data: Json
+          step_name: string
+          timestamp: string
+        }
+        Insert: {
+          actor?: string | null
+          entry_hash: string
+          id?: string
+          previous_entry_hash?: string | null
+          product_id: string
+          seq: number
+          step_data?: Json
+          step_name: string
+          timestamp?: string
+        }
+        Update: {
+          actor?: string | null
+          entry_hash?: string
+          id?: string
+          previous_entry_hash?: string | null
+          product_id?: string
+          seq?: number
+          step_data?: Json
+          step_name?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          craft_type: string
+          created_at: string
+          flagged: boolean
+          id: string
+          listed: boolean
+          lot_id: string | null
+          photo_url: string | null
+          price: number | null
+          retailer_id: string | null
+          status: string
+          title: string | null
+          weaver_id: string
+          yarn_source: string | null
+        }
+        Insert: {
+          craft_type: string
+          created_at?: string
+          flagged?: boolean
+          id: string
+          listed?: boolean
+          lot_id?: string | null
+          photo_url?: string | null
+          price?: number | null
+          retailer_id?: string | null
+          status?: string
+          title?: string | null
+          weaver_id: string
+          yarn_source?: string | null
+        }
+        Update: {
+          craft_type?: string
+          created_at?: string
+          flagged?: boolean
+          id?: string
+          listed?: boolean
+          lot_id?: string | null
+          photo_url?: string | null
+          price?: number | null
+          retailer_id?: string | null
+          status?: string
+          title?: string | null
+          weaver_id?: string
+          yarn_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_retailer_id_fkey"
+            columns: ["retailer_id"]
+            isOneToOne: false
+            referencedRelation: "retailers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_weaver_id_fkey"
+            columns: ["weaver_id"]
+            isOneToOne: false
+            referencedRelation: "weavers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      retailers: {
+        Row: {
+          contact: string | null
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scans_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weavers: {
+        Row: {
+          bio: string | null
+          craft_type: string
+          created_at: string
+          gi_registered: boolean
+          id: string
+          name: string
+          photo_url: string | null
+          region: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          craft_type: string
+          created_at?: string
+          gi_registered?: boolean
+          id?: string
+          name: string
+          photo_url?: string | null
+          region: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          craft_type?: string
+          created_at?: string
+          gi_registered?: boolean
+          id?: string
+          name?: string
+          photo_url?: string | null
+          region?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "weaver" | "admin" | "retailer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +470,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["weaver", "admin", "retailer"],
+    },
   },
 } as const
