@@ -18,7 +18,7 @@ export function parseProductId(raw: string): string | null {
   const text = raw.trim();
   if (!text) return null;
   const fromUrl = text.match(/\/verify\/([^/?#\s]+)/i);
-  if (fromUrl) return decodeURIComponent(fromUrl[1]).toUpperCase();
+  if (fromUrl?.[1]) return decodeURIComponent(fromUrl[1]).toUpperCase();
   if (/^[A-Za-z0-9-]{3,64}$/.test(text)) return text.toUpperCase();
   return null;
 }
