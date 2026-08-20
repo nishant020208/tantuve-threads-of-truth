@@ -10,11 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as RetailerRouteImport } from './routes/retailer'
+import { Route as WeaverRouteImport } from './routes/weaver'
+import { Route as VerifyProductIdRouteImport } from './routes/verify.$productId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyRoute = ApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -22,31 +39,112 @@ const ExploreRoute = ExploreRouteImport.update({
   path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RetailerRoute = RetailerRouteImport.update({
+  id: '/retailer',
+  path: '/retailer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WeaverRoute = WeaverRouteImport.update({
+  id: '/weaver',
+  path: '/weaver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyProductIdRoute = VerifyProductIdRouteImport.update({
+  id: '/verify/$productId',
+  path: '/verify/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apply': typeof ApplyRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/retailer': typeof RetailerRoute
+  '/weaver': typeof WeaverRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apply': typeof ApplyRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/retailer': typeof RetailerRoute
+  '/weaver': typeof WeaverRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apply': typeof ApplyRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/retailer': typeof RetailerRoute
+  '/weaver': typeof WeaverRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/retailer'
+    | '/weaver'
+    | '/verify/$productId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore'
-  id: '__root__' | '/' | '/explore'
+  to:
+    | '/'
+    | '/admin'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/retailer'
+    | '/weaver'
+    | '/verify/$productId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/retailer'
+    | '/weaver'
+    | '/verify/$productId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ApplyRoute: typeof ApplyRoute
   ExploreRoute: typeof ExploreRoute
+  LoginRoute: typeof LoginRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  RetailerRoute: typeof RetailerRoute
+  WeaverRoute: typeof WeaverRoute
+  VerifyProductIdRoute: typeof VerifyProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +156,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply': {
+      id: '/apply'
+      path: '/apply'
+      fullPath: '/apply'
+      preLoaderRoute: typeof ApplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -65,12 +177,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/retailer': {
+      id: '/retailer'
+      path: '/retailer'
+      fullPath: '/retailer'
+      preLoaderRoute: typeof RetailerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/weaver': {
+      id: '/weaver'
+      path: '/weaver'
+      fullPath: '/weaver'
+      preLoaderRoute: typeof WeaverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/$productId': {
+      id: '/verify/$productId'
+      path: '/verify/$productId'
+      fullPath: '/verify/$productId'
+      preLoaderRoute: typeof VerifyProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ApplyRoute: ApplyRoute,
   ExploreRoute: ExploreRoute,
+  LoginRoute: LoginRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  RetailerRoute: RetailerRoute,
+  WeaverRoute: WeaverRoute,
+  VerifyProductIdRoute: VerifyProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
