@@ -14,6 +14,7 @@ import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as VerifyProductIdRouteImport } from './routes/verify.$productId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyProductIdRoute = VerifyProductIdRouteImport.update({
+  id: '/verify/$productId',
+  path: '/verify/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
+  '/verify/$productId': typeof VerifyProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/apply' | '/explore' | '/login' | '/marketplace'
+  fullPaths:
+    | '/'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/verify/$productId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apply' | '/explore' | '/login' | '/marketplace'
-  id: '__root__' | '/' | '/apply' | '/explore' | '/login' | '/marketplace'
+  to:
+    | '/'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/verify/$productId'
+  id:
+    | '__root__'
+    | '/'
+    | '/apply'
+    | '/explore'
+    | '/login'
+    | '/marketplace'
+    | '/verify/$productId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  VerifyProductIdRoute: typeof VerifyProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/$productId': {
+      id: '/verify/$productId'
+      path: '/verify/$productId'
+      fullPath: '/verify/$productId'
+      preLoaderRoute: typeof VerifyProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,
+  VerifyProductIdRoute: VerifyProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
