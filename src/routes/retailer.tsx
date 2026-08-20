@@ -70,8 +70,14 @@ function RetailerPage() {
       .select("id, retailer_id")
       .eq("id", id)
       .maybeSingle();
-    if (!product) return toast.error("No textile found with that ID");
-    if (product.retailer_id) return toast.error("That textile is already in a retailer's custody");
+    if (!product) {
+      toast.error("No textile found with that ID");
+      return;
+    }
+    if (product.retailer_id) {
+      toast.error("That textile is already in a retailer's custody");
+      return;
+    }
     const { error } = await supabase
       .from("products")
       .update({ retailer_id: data?.retailer?.id ?? null, status: "with_retailer" })
