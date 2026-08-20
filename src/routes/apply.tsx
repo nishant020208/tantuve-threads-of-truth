@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/apply")({
   head: () => ({
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/apply")({
 });
 
 function ApplyPage() {
+  const { session } = useSession();
   const [form, setForm] = useState({ name: "", region: "", craft_type: "", bio: "" });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -48,12 +50,18 @@ function ApplyPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session) {
+      toast.error("Please sign in first so we can attach the application to your account.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("weavers").insert({
+      user_id: session.user.id,
       name: form.name,
       region: form.region,
       craft_type: form.craft_type,
       bio: form.bio || null,
+      gi_registered: false,
       status: "pending",
     });
     setBusy(false);
@@ -74,6 +82,15 @@ function ApplyPage() {
             Tell us about your loom and craft. The GI authority reviews every application before
             provenance tags can be issued.
           </p>
+          {!session && (
+            <p className="mt-6 rounded-md border border-gold/40 bg-card p-4 text-sm text-muted-foreground">
+              Applications are tied to an account.{" "}
+              <Link to="/login" className="text-madder hover:underline">
+                Create or sign into your account
+              </Link>{" "}
+              before submitting.
+            </p>
+          )}
           {done ? (
             <div className="mt-8 rounded-md border border-teal/40 bg-card p-6">
               <p className="font-display text-lg text-primary">Application received</p>
@@ -126,7 +143,7 @@ function ApplyPage() {
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 />
               </div>
-              <Button type="submit" variant="madder" disabled={busy}>
+              <Button type="submit" variant="madder" disabled={busy || !session}>
                 {busy ? "Submitting…" : "Submit application"}
               </Button>
             </form>

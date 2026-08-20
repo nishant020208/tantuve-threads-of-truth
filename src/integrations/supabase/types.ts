@@ -219,9 +219,34 @@ export type Database = {
         }
         Relationships: []
       }
-      retailers: {
+      retailer_contacts: {
         Row: {
           contact: string | null
+          created_at: string
+          retailer_id: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          retailer_id: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          retailer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retailer_contacts_retailer_id_fkey"
+            columns: ["retailer_id"]
+            isOneToOne: true
+            referencedRelation: "retailers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retailers: {
+        Row: {
           created_at: string
           id: string
           location: string | null
@@ -229,7 +254,6 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          contact?: string | null
           created_at?: string
           id?: string
           location?: string | null
@@ -237,7 +261,6 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          contact?: string | null
           created_at?: string
           id?: string
           location?: string | null
