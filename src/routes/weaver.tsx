@@ -94,7 +94,7 @@ function WeaverPage() {
           product_id: productId,
           step_name: stepKey,
           step_data: { note: `${label} completed`, recorded_by: data?.weaver?.name ?? "weaver" },
-          actor: data?.weaver?.name ?? undefined,
+          actor: data?.weaver?.name ?? "weaver",
         },
       });
       if (stepKey === "finishing")
