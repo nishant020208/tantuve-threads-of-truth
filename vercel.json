@@ -4,8 +4,9 @@
   "installCommand": "npm install",
   "framework": null,
   "functions": {
-    "api/index.mjs": {
-      "runtime": "@vercel/edge"
+    "api/index.js": {
+      "runtime": "@vercel/node",
+      "maxDuration": 30
     }
   },
   "routes": [
@@ -21,7 +22,7 @@
     },
     {
       "src": "/(.*)",
-      "destination": "/api/index.mjs"
+      "destination": "/api/index.js"
     }
   ]
 }
