@@ -3,12 +3,6 @@
   "outputDirectory": "dist/client",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "api/index.js": {
-      "runtime": "@vercel/node",
-      "maxDuration": 30
-    }
-  },
   "routes": [
     {
       "src": "/assets/(.*)",
