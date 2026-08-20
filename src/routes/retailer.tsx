@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
+import { ScanQrButton } from "@/components/qr-scanner";
 
 export const Route = createFileRoute("/retailer")({
   head: () => ({
@@ -62,9 +63,8 @@ function RetailerPage() {
       </Shell>
     );
 
-  const receive = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const id = code.trim().toUpperCase();
+  const receiveId = async (rawId: string) => {
+    const id = rawId.trim().toUpperCase();
     const { data: product } = await supabase
       .from("products")
       .select("id, retailer_id")
@@ -88,6 +88,11 @@ function RetailerPage() {
       toast.success("Custody confirmed");
       await qc.invalidateQueries({ queryKey: ["retailer-inventory"] });
     }
+  };
+
+  const receive = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await receiveId(code);
   };
 
   const toggleListing = async (id: string, listed: boolean) => {
@@ -115,7 +120,7 @@ function RetailerPage() {
         </h1>
         <p className="mt-2 text-muted-foreground">{data?.retailer?.location}</p>
 
-        <form onSubmit={receive} className="mt-8 flex max-w-md gap-2">
+        <form onSubmit={receive} className="mt-8 flex max-w-xl flex-wrap gap-2">
           <Input
             value={code}
             placeholder="Scan or type product ID (TNT-XXXX-XXXX)"
@@ -125,7 +130,15 @@ function RetailerPage() {
           <Button type="submit" variant="madder">
             Receive
           </Button>
+          <ScanQrButton
+            label="Scan QR"
+            variant="outline"
+            onDetect={(productId) => void receiveId(productId)}
+          />
         </form>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Scan the weaver&apos;s QR tag to confirm custody instantly, or key the ID in by hand.
+        </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           {(data?.products ?? []).length === 0 && (
