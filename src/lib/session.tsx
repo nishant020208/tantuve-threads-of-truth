@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "weaver" | "admin" | "retailer";
 
-export const roleHome: Record<AppRole, string> = {
+export const roleHome = {
   weaver: "/weaver",
   admin: "/admin",
   retailer: "/retailer",
-};
+} as const satisfies Record<AppRole, string>;
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
