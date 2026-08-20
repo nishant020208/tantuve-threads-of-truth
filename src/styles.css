@@ -283,3 +283,22 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+@keyframes tv-scan-sweep {
+  0% {
+    top: 18%;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 82%;
+    opacity: 0.2;
+  }
+}
+
+@utility scan-sweep {
+  animation: tv-scan-sweep 2.2s ease-in-out infinite alternate;
+  box-shadow: 0 0 14px 2px color-mix(in oklab, var(--gold) 70%, transparent);
+}
