@@ -44,6 +44,8 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Default export — used by Vercel serverless functions, Cloudflare Workers,
+// and any other runtime that reads a default export with a `fetch` handler.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {

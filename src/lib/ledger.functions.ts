@@ -4,7 +4,7 @@ import { computeEntryHash, generateProductCode } from "@/lib/chain";
 
 export const createProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
+  .validator(
     (input: {
       title: string;
       craft_type: string;
@@ -44,7 +44,7 @@ export const createProduct = createServerFn({ method: "POST" })
 
 export const appendLedgerStep = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
+  .validator(
     (input: {
       product_id: string;
       step_name: string;
@@ -94,7 +94,7 @@ export const appendLedgerStep = createServerFn({ method: "POST" })
 
 export const setProductStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { product_id: string; status: string }) => input)
+  .validator((input: { product_id: string; status: string }) => input)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("products")

@@ -1,15 +1,35 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+
+// Inject select server-only env vars into the client bundle so the Supabase
+// client (which runs in the browser) can reach the database.
+// Only public-safe values are forwarded — service-role keys stay server-only.
+function injectPublicEnv(): Record<string, string> {
+  const keys = [
+    "SUPABASE_URL",
+    "SUPABASE_PUBLISHABLE_KEY",
+  ];
+  const result: Record<string, string> = {};
+  for (const key of keys) {
+    const val = process.env[key];
+    if (val) result[`import.meta.env.${key}`] = JSON.stringify(val);
+  }
+  return result;
+}
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
+  plugins: [
+    tsConfigPaths(),
+    tanstackStart({
+      server: {
+        entry: "server",
+      },
+    }),
+    tailwindcss(),
+    react(),
+  ],
+  define: injectPublicEnv(),
 });
