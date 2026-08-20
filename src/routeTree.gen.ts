@@ -16,6 +16,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as RetailerRouteImport } from './routes/retailer'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as WeaverRouteImport } from './routes/weaver'
 import { Route as VerifyProductIdRouteImport } from './routes/verify.$productId'
 
@@ -54,6 +55,11 @@ const RetailerRoute = RetailerRouteImport.update({
   path: '/retailer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WeaverRoute = WeaverRouteImport.update({
   id: '/weaver',
   path: '/weaver',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/retailer': typeof RetailerRoute
+  '/scan': typeof ScanRoute
   '/weaver': typeof WeaverRoute
   '/verify/$productId': typeof VerifyProductIdRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/retailer': typeof RetailerRoute
+  '/scan': typeof ScanRoute
   '/weaver': typeof WeaverRoute
   '/verify/$productId': typeof VerifyProductIdRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/retailer': typeof RetailerRoute
+  '/scan': typeof ScanRoute
   '/weaver': typeof WeaverRoute
   '/verify/$productId': typeof VerifyProductIdRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/marketplace'
     | '/retailer'
+    | '/scan'
     | '/weaver'
     | '/verify/$productId'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/marketplace'
     | '/retailer'
+    | '/scan'
     | '/weaver'
     | '/verify/$productId'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/marketplace'
     | '/retailer'
+    | '/scan'
     | '/weaver'
     | '/verify/$productId'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
   RetailerRoute: typeof RetailerRoute
+  ScanRoute: typeof ScanRoute
   WeaverRoute: typeof WeaverRoute
   VerifyProductIdRoute: typeof VerifyProductIdRoute
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RetailerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/weaver': {
       id: '/weaver'
       path: '/weaver'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,
   RetailerRoute: RetailerRoute,
+  ScanRoute: ScanRoute,
   WeaverRoute: WeaverRoute,
   VerifyProductIdRoute: VerifyProductIdRoute,
 }

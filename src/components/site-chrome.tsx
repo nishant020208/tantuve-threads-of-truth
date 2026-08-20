@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Languages, Menu } from "lucide-react";
+import { Languages, Menu, QrCode } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -58,6 +58,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false);
 
   const links = [
+    { to: "/scan", label: "Scan QR" },
     { to: "/explore", label: t("nav_explore") },
     { to: "/marketplace", label: t("nav_market") },
     { to: "/apply", label: t("nav_apply") },
@@ -91,6 +92,17 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <Button
+            asChild
+            variant={transparent ? "outlineLight" : "outline"}
+            size="sm"
+            className="hidden sm:inline-flex"
+          >
+            <Link to="/scan">
+              <QrCode className="mr-2 h-4 w-4" />
+              Scan
+            </Link>
+          </Button>
           <LanguageToggle light={transparent} />
           {session && role ? (
             <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm">

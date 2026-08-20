@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, QrCode, Landmark, Store, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { ScanQrButton } from "@/components/qr-scanner";
 import { ThreadDivider, useReveal } from "@/components/thread-divider";
 import { useI18n } from "@/lib/i18n";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import hero from "@/assets/hero-saree.jpg";
 import weaver1 from "@/assets/weaver-1.jpg";
@@ -39,6 +41,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 function Index() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { ref, shown } = useReveal<HTMLDivElement>();
 
   const { data: stats } = useQuery({
@@ -80,8 +83,15 @@ function Index() {
             </h1>
             <p className="mt-6 max-w-xl text-primary-foreground/75">{t("hero_sub")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
+              <ScanQrButton
+                label="Scan a saree tag"
+                size="lg"
+                onDetect={(productId) =>
+                  navigate({ to: "/verify/$productId", params: { productId } })
+                }
+              />
               {stats?.sampleId && (
-                <Button asChild variant="gold" size="lg">
+                <Button asChild variant="outlineLight" size="lg">
                   <Link to="/verify/$productId" params={{ productId: stats.sampleId }}>
                     <QrCode className="mr-2 h-4 w-4" />
                     {t("hero_cta")}
