@@ -162,6 +162,85 @@ async def resolve_dispute(dispute_id: str, body: dict, user: dict = Depends(get_
     return {"message": f"Dispute {status}"}
 
 
+@router.get("/flagged")
+async def list_flagged(user: dict = Depends(get_current_user)):
+    """List all plausibility-flagged ledger entries across all products."""
+    _require_admin(user)
+    client = get_client()
+    try:
+        resp = (
+            client.table("ledger_entries")
+            .select("*, products(title, craft_type, weaver_id)")
+            .eq("flagged_plausibility", True)
+            .order("timestamp", ascending=False)
+            .execute()
+        )
+        return resp.data if hasattr(resp, "data") else []
+    except Exception:
+        return []
+
+
+@router.post("/flagged/{entry_id}/review")
+async def review_flagged(entry_id: str, body: dict, user: dict = Depends(get_current_user)):
+    """Mark a flagged entry as reviewed or escalate to dispute."""
+    _require_admin(user)
+    action = body.get("action", "reviewed")
+    client = get_client()
+    if action == "escalate":
+        # Get the product_id from the entry
+        resp = client.table("ledger_entries").select("product_id").eq("id", entry_id).execute()
+        rows = resp.data if hasattr(resp, "data") else []
+        if rows:
+            client.table("disputes").insert({
+                "product_id": rows[0]["product_id"],
+                "reason": "Escalated from plausibility flag review",
+                "status": "open",
+            }).execute()
+    # Clear the flag
+    client.table("ledger_entries").update({
+        "flagged_plausibility": False,
+        "flagged_reason": None,
+    }).eq("id", entry_id).execute()
+    return {"message": f"Flag {action}"}
+
+
+@router.get("/spot-checks")
+async def list_spot_checks(user: dict = Depends(get_current_user)):
+    """List all products selected for spot-check review."""
+    _require_admin(user)
+    client = get_client()
+    try:
+        resp = (
+            client.table("products")
+            .select("*, weavers(name, region, craft_type)")
+            .eq("spot_check_selected", True)
+            .order("created_at", ascending=False)
+            .execute()
+        )
+        return resp.data if hasattr(resp, "data") else []
+    except Exception:
+        return []
+
+
+@router.post("/spot-checks/{product_id}/review")
+async def review_spot_check(product_id: str, body: dict, user: dict = Depends(get_current_user)):
+    """Mark a spot-check as reviewed or escalate to dispute."""
+    _require_admin(user)
+    action = body.get("action", "reviewed")
+    client = get_client()
+    new_status = "reviewed" if action == "review" else "escalated"
+    client.table("products").update({
+        "spot_check_status": new_status,
+    }).eq("id", product_id).execute()
+    if action == "escalate":
+        client.table("disputes").insert({
+            "product_id": product_id,
+            "reason": "Escalated from spot-check review",
+            "status": "open",
+        }).execute()
+    return {"message": f"Spot check {new_status}"}
+
+
 @router.get("/analytics")
 async def analytics(user: dict = Depends(get_current_user)):
     """Get analytics data for the admin dashboard."""
