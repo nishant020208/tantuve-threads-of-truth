@@ -1,6 +1,8 @@
 {
-  "buildCommand": "npm run build && node scripts/vercel-output.mjs",
-  "outputDirectory": ".vercel/output/static",
-  "installCommand": "npm install",
-  "framework": null
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "echo 'handled in buildCommand'",
+  "framework": "nextjs",
+  "rootDirectory": "frontend",
+  "rewrites": []
 }
