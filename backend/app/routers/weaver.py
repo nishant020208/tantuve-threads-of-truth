@@ -17,7 +17,8 @@ from ..services.chain import (
     generate_product_code,
     PRODUCTION_STEPS,
 )
-from ..services.ipfs import pin_json, ipfs_gateway_url
+from ..services.ipfs import pin_json, pin_file, ipfs_gateway_url
+import base64 as b64mod
 
 router = APIRouter(prefix="/weaver", tags=["weaver"])
 
@@ -34,6 +35,11 @@ class AppendStepRequest(BaseModel):
     step_name: str
     step_data: dict = {}
     actor: Optional[str] = None
+    photo_base64: Optional[str] = None  # base64-encoded photo evidence
+
+
+# Minimum expected duration between steps (2 hours) for plausibility flagging
+MIN_STEP_DURATION_SECONDS = 2 * 60 * 60  # 2 hours
 
 
 def _get_weaver(user: dict) -> dict:
@@ -148,11 +154,50 @@ async def append_step(
     previous_entry_hash = last_rows[0]["entry_hash"] if last_rows else None
     timestamp = datetime.now(timezone.utc).isoformat()
 
+    # --- Photo upload to IPFS ---
+    photo_ipfs_cid = None
+    if req.photo_base64:
+        try:
+            photo_bytes = b64mod.b64decode(req.photo_base64)
+            photo_ipfs_cid = await pin_file(
+                photo_bytes,
+                filename=f"{product_id}_step{seq}.jpg",
+                name=f"tantuve-{product_id}-step{seq}",
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Photo upload failed: {str(e)}")
+
+    # Merge photo CID into step_data for the hash chain
+    step_data = dict(req.step_data)
+    if photo_ipfs_cid:
+        step_data["photo_ipfs_cid"] = photo_ipfs_cid
+
+    # --- Plausibility flagging ---
+    flagged_plausibility = False
+    flagged_reason = None
+    if last_rows:
+        last_ts_str = last_rows[0].get("timestamp")
+        if last_ts_str:
+            try:
+                from datetime import datetime as dt
+                last_ts = dt.fromisoformat(last_ts_str.replace("Z", "+00:00"))
+                now_ts = dt.fromisoformat(timestamp.replace("Z", "+00:00"))
+                elapsed = (now_ts - last_ts).total_seconds()
+                if elapsed < MIN_STEP_DURATION_SECONDS:
+                    flagged_plausibility = True
+                    minutes = int(elapsed / 60)
+                    flagged_reason = (
+                        f"step logged {minutes} minute{'s' if minutes != 1 else ''} "
+                        f"after previous step (minimum expected: {MIN_STEP_DURATION_SECONDS // 60} minutes)"
+                    )
+            except Exception:
+                pass  # If timestamp parsing fails, skip flagging
+
     entry_hash = compute_entry_hash(
         product_id=product_id,
         seq=seq,
         step_name=req.step_name,
-        step_data=req.step_data,
+        step_data=step_data,
         timestamp=timestamp,
         previous_entry_hash=previous_entry_hash,
     )
@@ -161,14 +206,22 @@ async def append_step(
         "product_id": product_id,
         "seq": seq,
         "step_name": req.step_name,
-        "step_data": req.step_data,
+        "step_data": step_data,
         "actor": req.actor or weaver["name"],
         "timestamp": timestamp,
         "entry_hash": entry_hash,
         "previous_entry_hash": previous_entry_hash,
+        "flagged_plausibility": flagged_plausibility,
+        "flagged_reason": flagged_reason,
     }).execute()
 
-    return {"seq": seq, "entry_hash": entry_hash, "timestamp": timestamp}
+    return {
+        "seq": seq,
+        "entry_hash": entry_hash,
+        "timestamp": timestamp,
+        "photoIpfsCid": photo_ipfs_cid,
+        "flagged": flagged_plausibility,
+    }
 
 
 @router.post("/products/{product_id}/complete")
@@ -210,7 +263,18 @@ async def complete_product(product_id: str, user: dict = Depends(get_current_use
 
     final_hash = verification["finalHash"]
 
-    # Pin to IPFS
+    # Collect per-step photo CIDs for the anchored record
+    step_photos = []
+    for e in entries:
+        sd = e.get("step_data") or {}
+        if isinstance(sd, dict) and sd.get("photo_ipfs_cid"):
+            step_photos.append({
+                "step": e["step_name"],
+                "seq": e["seq"],
+                "photoIpfsCid": sd["photo_ipfs_cid"],
+            })
+
+    # Pin to IPFS — includes per-step photo CIDs
     ipfs_record = {
         "productId": product_id,
         "finalHash": final_hash,
@@ -219,6 +283,7 @@ async def complete_product(product_id: str, user: dict = Depends(get_current_use
         "craftType": product["craft_type"],
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "entryCount": len(entries),
+        "stepPhotos": step_photos,
     }
 
     try:
@@ -226,22 +291,27 @@ async def complete_product(product_id: str, user: dict = Depends(get_current_use
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"IPFS pinning failed: {str(e)}")
 
-    # Update product status
-    client.table("products").update({
-        "status": "completed",
-    }).eq("id", product_id).execute()
-
-    # We need to store the ipfs_cid and final_hash — these may not be in the schema yet
-    # Store in a metadata approach via ledger_entries or we'll add them later
-    # For now, store the CID in the product's existing fields
-    # The products table doesn't have ipfs_cid column, so we'll add a note
-    # Actually, let's add it via the update — if the column doesn't exist, we handle gracefully
+    # Update product status + store CID
+    update_fields = {"status": "completed"}
     try:
-        client.table("products").update({
-            "lot_id": f"ipfs:{cid}",
-        }).eq("id", product_id).execute()
+        client.table("products").update({"ipfs_cid": cid}).eq("id", product_id).execute()
     except Exception:
-        pass  # Column might not exist yet
+        try:
+            client.table("products").update({"lot_id": f"ipfs:{cid}"}).eq("id", product_id).execute()
+        except Exception:
+            pass
+    client.table("products").update(update_fields).eq("id", product_id).execute()
+
+    # --- Spot-check random selection (10-15% of completed products) ---
+    import random
+    if random.random() < 0.12:  # ~12% chance
+        try:
+            client.table("products").update({
+                "spot_check_selected": True,
+                "spot_check_status": "pending",
+            }).eq("id", product_id).execute()
+        except Exception:
+            pass  # Column may not exist yet
 
     return {
         "productId": product_id,
@@ -250,6 +320,7 @@ async def complete_product(product_id: str, user: dict = Depends(get_current_use
         "ipfsCid": cid,
         "ipfsUrl": ipfs_gateway_url(cid),
         "entryCount": len(entries),
+        "stepPhotos": step_photos,
     }
 
 
