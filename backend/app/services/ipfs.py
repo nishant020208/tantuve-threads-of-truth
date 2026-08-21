@@ -40,6 +40,23 @@ async def pin_json(data: dict[str, Any], name: str = "tantuve-record") -> str:
         return result["IpfsHash"]
 
 
+async def pin_file(file_bytes: bytes, filename: str, name: str = "tantuve-photo") -> str:
+    """Pin a file (e.g. photo) to IPFS via Pinata. Returns the CID string."""
+    s = get_settings()
+    headers = {
+        "Authorization": f"Bearer {s.PINATA_JWT}",
+    }
+    # Pinata file upload endpoint
+    url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
+    files = {"file": (filename, io.BytesIO(file_bytes), "image/jpeg")}
+    data = {"pinataMetadata": json.dumps({"name": name})}
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(url, headers=headers, files=files, data=data)
+        resp.raise_for_status()
+        result = resp.json()
+        return result["IpfsHash"]
+
+
 async def fetch_from_ipfs(cid: str) -> Optional[dict[str, Any]]:
     """Fetch a JSON object from IPFS using multiple gateways."""
     for gateway in IPFS_GATEWAYS:
