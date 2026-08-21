@@ -39,7 +39,8 @@ const Ctx = createContext<SessionCtx>({
   toggle: () => {},
 });
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+// When no API_BASE is set, use relative paths (Vercel serverless functions at /api/*)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionUser | null>(null);
@@ -63,7 +64,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const url = API_BASE ? `${API_BASE}/auth/login` : "/api/login";
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -80,8 +82,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    // Best-effort server-side logout (clear httpOnly cookie if present)
-    fetch(`${API_BASE}/auth/logout`, { method: "POST" }).catch(() => {});
+    // Best-effort server-side logout
+    const logoutUrl = API_BASE ? `${API_BASE}/auth/logout` : "/api/logout";
+    fetch(logoutUrl, { method: "POST" }).catch(() => {});
     setToken(null);
     setSession(null);
     localStorage.removeItem("tantuve-token");
