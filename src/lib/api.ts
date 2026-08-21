@@ -71,6 +71,9 @@ export const adminApi = {
   spotChecks: () => apiFetch<any[]>("/admin/spot-checks"),
   reviewSpotCheck: (productId: string, action: string) =>
     apiFetch<any>(`/admin/spot-checks/${productId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
+  retailers: (status?: string) => apiFetch<any[]>(`/admin/retailers${status ? `?status=${status}` : ""}`),
+  approveRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/approve`, { method: "POST" }),
+  rejectRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/reject`, { method: "POST" }),
 };
 
 // --- Retailer ---
@@ -96,4 +99,6 @@ export const publicApi = {
   explore: () => apiFetch<any[]>("/explore"),
   marketplace: () => apiFetch<any[]>("/marketplace"),
   giRegistry: () => apiFetch<any[]>("/gi-registry"),
+  applyRetailer: (data: { email: string; password: string; business_name: string; location: string; contact_email?: string }) =>
+    apiFetch<any>("/auth/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
 };
