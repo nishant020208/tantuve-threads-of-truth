@@ -44,12 +44,24 @@ class RegisterRequest(BaseModel):
 
 
 def _find_user_by_email(email: str) -> Optional[dict]:
-    """Find a user in profiles by their id (which is the UUID used as email-based auth)."""
+    """Find a user in profiles by their email."""
     client = get_client()
-    # We store users with email as the id field in profiles
-    resp = client.table("profiles").select("*").eq("id", email).execute()
+    # Try email column first
+    try:
+        resp = client.table("profiles").select("*").eq("email", email).execute()
+        rows = resp.data if hasattr(resp, "data") else []
+        if rows:
+            return rows[0]
+    except Exception:
+        pass
+    # Fall back: search all profiles (for backwards compat)
+    resp = client.table("profiles").select("*").execute()
     rows = resp.data if hasattr(resp, "data") else []
-    return rows[0] if rows else None
+    # Check if email matches full_name or any other field
+    for r in rows:
+        if r.get("full_name", "").lower() == email.lower():
+            return r
+    return None
 
 
 def _find_role_for_user(user_id: str) -> Optional[str]:
@@ -59,15 +71,23 @@ def _find_role_for_user(user_id: str) -> Optional[str]:
     return rows[0]["role"] if rows else None
 
 
-def _create_user(email: str, full_name: str | None = None) -> dict:
-    """Create a new profile + weaver row."""
+def _find_user_id_by_email(email: str) -> Optional[str]:
+    """Get the UUID user_id for an email."""
+    user = _find_user_by_email(email)
+    return user["id"] if user else None
+
+
+def _create_user(email: str, full_name: str | None = None) -> str:
+    """Create a new profile with UUID. Returns the user_id."""
+    import uuid as _uuid
     client = get_client()
-    # Create profile
+    user_id = str(_uuid.uuid4())
     client.table("profiles").insert({
-        "id": email,
+        "id": user_id,
+        "email": email,
         "full_name": full_name or email.split("@")[0],
     }).execute()
-    return {"id": email, "full_name": full_name}
+    return user_id
 
 
 @router.post("/login")
@@ -77,9 +97,16 @@ async def login(req: LoginRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    role = _find_role_for_user(req.email)
+    user_id = user["id"]
+
+    # Verify password against stored hash
+    stored_hash = user.get("password_hash")
+    if stored_hash and not verify_password(req.password, stored_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    role = _find_role_for_user(user_id)
     if not role:
-        weaver = _find_weaver_record(req.email)
+        weaver = _find_weaver_record(user_id)
         if weaver:
             role = "weaver"
         else:
@@ -87,7 +114,7 @@ async def login(req: LoginRequest):
 
     # --- Whitelist gate: enforce approval before issuing JWT ---
     if role == "weaver":
-        weaver = _find_weaver_record(req.email)
+        weaver = _find_weaver_record(user_id)
         if not weaver:
             raise HTTPException(status_code=401, detail="No weaver profile found")
         status = weaver.get("status", "pending")
@@ -97,7 +124,7 @@ async def login(req: LoginRequest):
             raise HTTPException(status_code=403, detail="Your access request was not approved")
     elif role == "retailer":
         client = get_client()
-        resp = client.table("retailers").select("*").eq("user_id", req.email).limit(1).execute()
+        resp = client.table("retailers").select("*").eq("user_id", user_id).limit(1).execute()
         rows = resp.data if hasattr(resp, "data") else []
         if rows:
             r_status = rows[0].get("request_status", "pending")
@@ -106,11 +133,11 @@ async def login(req: LoginRequest):
             if r_status == "rejected":
                 raise HTTPException(status_code=403, detail="Your retailer access request was not approved")
 
-    token = create_token(req.email, role)
+    token = create_token(user_id, role)
     return {
         "token": token,
         "user": {
-            "id": req.email,
+            "id": user_id,
             "email": req.email,
             "full_name": user.get("full_name"),
             "role": role,
@@ -143,7 +170,21 @@ async def apply_retailer(body: dict):
     existing = _find_user_by_email(email)
     if not existing:
         _create_user(email, business_name)
+        # Store password hash
+        try:
+            client.table("profiles").update({
+                "password_hash": hash_password(password),
+            }).eq("id", email).execute()
+        except Exception:
+            pass
     else:
+        # Update password hash
+        try:
+            client.table("profiles").update({
+                "password_hash": hash_password(password),
+            }).eq("id", email).execute()
+        except Exception:
+            pass
         # Check if already has a retailer application
         resp = client.table("retailers").select("*").eq("user_id", email).limit(1).execute()
         rows = resp.data if hasattr(resp, "data") else []
@@ -189,7 +230,22 @@ async def apply_weaver(req: ApplyWeaverRequest):
     # Check if user exists, create if not
     existing = _find_user_by_email(req.email)
     if not existing:
-        _create_user(req.email, req.name)
+        user_id = _create_user(req.email, req.name)
+        # Store password hash
+        try:
+            client.table("profiles").update({
+                "password_hash": hash_password(req.password),
+            }).eq("id", req.email).execute()
+        except Exception:
+            pass
+    else:
+        # Update password hash if user exists
+        try:
+            client.table("profiles").update({
+                "password_hash": hash_password(req.password),
+            }).eq("id", req.email).execute()
+        except Exception:
+            pass
 
     # Check for existing weaver application
     existing_weaver = _find_weaver_record(req.email)
