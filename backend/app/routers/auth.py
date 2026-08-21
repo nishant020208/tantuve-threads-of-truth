@@ -173,6 +173,15 @@ async def apply_weaver(req: ApplyWeaverRequest):
     return {"message": "Application submitted for GI authority review"}
 
 
+@router.post("/logout")
+async def logout():
+    """Client-side logout — clear any httpOnly cookie if present."""
+    from fastapi.responses import Response
+    response = Response(content='{"message":"logged out"}', media_type="application/json")
+    response.delete_cookie("tantuve_token")
+    return response
+
+
 @router.get("/me")
 async def get_me(user: dict = Depends(get_current_user)):
     """Return current user info + role."""
