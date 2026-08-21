@@ -44,7 +44,7 @@ export const weaverApi = {
   createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string }) =>
     apiFetch<{ productId: string }>("/weaver/products", { method: "POST", body: JSON.stringify(data) }),
   getProduct: (id: string) => apiFetch<any>(`/weaver/products/${id}`),
-  appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string }) =>
+  appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string }) =>
     apiFetch<any>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
     apiFetch<any>(`/weaver/products/${productId}/complete`, { method: "POST" }),
@@ -65,6 +65,12 @@ export const adminApi = {
   resolveDispute: (id: string, status: string) =>
     apiFetch<any>(`/admin/disputes/${id}/resolve`, { method: "POST", body: JSON.stringify({ status }) }),
   analytics: () => apiFetch<any>("/admin/analytics"),
+  flagged: () => apiFetch<any[]>("/admin/flagged"),
+  reviewFlagged: (entryId: string, action: string) =>
+    apiFetch<any>(`/admin/flagged/${entryId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
+  spotChecks: () => apiFetch<any[]>("/admin/spot-checks"),
+  reviewSpotCheck: (productId: string, action: string) =>
+    apiFetch<any>(`/admin/spot-checks/${productId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
 };
 
 // --- Retailer ---
