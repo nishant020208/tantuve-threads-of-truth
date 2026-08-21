@@ -1,0 +1,51 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerClient } from "@/lib/server-db";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { email, password, business_name, location } = body;
+
+    if (!email || !password || !business_name) {
+      return NextResponse.json({ detail: "Email, password, and business name are required" }, { status: 400 });
+    }
+
+    const client = getServerClient();
+
+    let userId: string;
+    try {
+      const { data, error } = await client.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+      if (error) {
+        if (error.message?.includes("already")) {
+          return NextResponse.json({ detail: "Email already registered" }, { status: 409 });
+        }
+        throw error;
+      }
+      userId = data.user.id;
+    } catch (err: any) {
+      return NextResponse.json({ detail: `Account creation failed: ${err.message}` }, { status: 500 });
+    }
+
+    await client.from("profiles").upsert({ id: userId, full_name: business_name, email });
+    await client.from("user_roles").upsert({ user_id: userId, role: "retailer" });
+
+    const { error } = await client.from("retailers").insert({
+      user_id: userId,
+      name: business_name,
+      location: location || "",
+    });
+
+    if (error) {
+      return NextResponse.json({ detail: `Failed: ${error.message}` }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Retailer application submitted for GI authority review" });
+  } catch (err: any) {
+    console.error("Apply retailer error:", err);
+    return NextResponse.json({ detail: err.message || "Internal server error" }, { status: 500 });
+  }
+}
