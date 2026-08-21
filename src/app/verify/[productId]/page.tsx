@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ShieldCheck, ShieldAlert, Loader2, FileDown, Flag, ExternalLink } from "lucide-react";
+import { VerifyReveal } from "@/components/verify-reveal";
 import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ export default function VerifyPage() {
         <div>
           {/* Verification status banner */}
           <div
-            className={`flex items-center gap-3 rounded-md border p-5 ${
+            className={`flex items-center gap-4 rounded-md border p-5 ${
               !finalResult
                 ? "border-border bg-card"
                 : finalResult.valid
@@ -108,10 +109,8 @@ export default function VerifyPage() {
           >
             {!finalResult ? (
               <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-            ) : finalResult.valid ? (
-              <ShieldCheck className="h-7 w-7 text-teal" />
             ) : (
-              <ShieldAlert className="h-7 w-7 text-madder" />
+              <VerifyReveal verified={finalResult.valid} className="h-16 w-16 shrink-0" />
             )}
             <div>
               <p className="font-display text-xl text-primary">
