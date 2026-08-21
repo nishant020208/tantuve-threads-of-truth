@@ -1,5 +1,5 @@
 /**
- * Tantuve API client — all calls go through here.
+ * Tantuve API client — all calls go through Vercel serverless functions at /api/*.
  */
 
 import { API_BASE } from "./session";
@@ -20,10 +20,12 @@ async function apiFetch<T = unknown>(
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
+  // Use API_BASE if set, otherwise use /api/* serverless functions
+  const url = API_BASE ? `${API_BASE}${path}` : `/api${path}`;
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  } catch (fetchErr) {
+    res = await fetch(url, { ...options, headers });
+  } catch {
     throw new Error("Unable to connect to the server. Please try again later.");
   }
   if (!res.ok) {
@@ -37,10 +39,10 @@ async function apiFetch<T = unknown>(
 export const authApi = {
   login: (email: string, password: string) =>
     apiFetch<{ token: string; user: { id: string; email: string; full_name: string; role: string } }>(
-      "/auth/login",
+      "/login",
       { method: "POST", body: JSON.stringify({ email, password }) },
     ),
-  me: () => apiFetch<{ user_id: string; role: string }>("/auth/me"),
+  me: () => apiFetch<{ user_id: string; role: string }>("/me"),
 };
 
 // --- Weaver ---
@@ -53,7 +55,7 @@ export const weaverApi = {
     apiFetch<any>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
     apiFetch<any>(`/weaver/products/${productId}/complete`, { method: "POST" }),
-  qrUrl: (productId: string) => `${API_BASE}/weaver/products/${productId}/qr`,
+  qrUrl: (productId: string) => API_BASE ? `${API_BASE}/weaver/products/${productId}/qr` : `/api/weaver/products/${productId}/qr`,
 };
 
 // --- Admin ---
@@ -105,5 +107,5 @@ export const publicApi = {
   marketplace: () => apiFetch<any[]>("/marketplace"),
   giRegistry: () => apiFetch<any[]>("/gi-registry"),
   applyRetailer: (data: { email: string; password: string; business_name: string; location: string; contact_email?: string }) =>
-    apiFetch<any>("/auth/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
+    apiFetch<any>("/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
 };
