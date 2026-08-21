@@ -1,0 +1,14 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+supabase==2.15.2
+PyJWT[crypto]==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.3.0
+python-multipart==0.0.20
+pydantic-settings==2.9.1
+httpx==0.28.1
+qrcode[pil]==8.2
+Pillow==11.2.1
+aiohttp==3.11.18
+slowapi==0.1.9
+python-dotenv==1.1.0
