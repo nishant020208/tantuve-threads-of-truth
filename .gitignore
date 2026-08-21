@@ -19,6 +19,12 @@ dist-ssr
 # Vercel build output
 .vercel/
 
+# Blockchain build artifacts
+blockchain/artifacts/
+blockchain/cache/
+blockchain/node_modules/
+blockchain/typechain-types/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
