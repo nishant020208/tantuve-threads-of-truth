@@ -177,29 +177,49 @@ export default function VerifyPage() {
           {/* Production ledger timeline */}
           <h2 className="mt-10 font-display text-2xl text-primary">Production ledger</h2>
           <ol className="mt-6 border-l border-border pl-6">
-            {entries.map((entry: any) => (
-              <li key={entry.id} className="relative pb-8">
-                <span className="absolute -left-[31px] top-1 grid h-3 w-3 place-items-center rounded-full bg-gold ring-4 ring-background" />
-                <p className="font-display text-lg capitalize text-primary">
-                  {entry.step_name.replace(/_/g, " ")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(entry.timestamp).toLocaleString()}
-                </p>
-                {entry.step_data && typeof entry.step_data === "object" && (
-                  <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
-                    {Object.entries(entry.step_data as Record<string, unknown>).map(([k, v]) => (
-                      <p key={k}>
-                        <span className="capitalize">{k.replace(/_/g, " ")}</span>: {String(v)}
+            {entries.map((entry: any) => {
+              const photoCid = entry.step_data?.photo_ipfs_cid;
+              return (
+                <li key={entry.id} className="relative pb-8">
+                  <span className="absolute -left-[31px] top-1 grid h-3 w-3 place-items-center rounded-full bg-gold ring-4 ring-background" />
+                  <div className="flex flex-wrap items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display text-lg capitalize text-primary">
+                        {entry.step_name.replace(/_/g, " ")}
                       </p>
-                    ))}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.timestamp).toLocaleString()}
+                        {entry.actor && <> · by {entry.actor}</>}
+                      </p>
+                      {entry.step_data && typeof entry.step_data === "object" && (
+                        <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
+                          {Object.entries(entry.step_data as Record<string, unknown>).map(([k, v]) => {
+                            if (k === "photo_ipfs_cid") return null;
+                            return (
+                              <p key={k}>
+                                <span className="capitalize">{k.replace(/_/g, " ")}</span>: {String(v)}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground/80">
+                        {entry.entry_hash}
+                      </p>
+                    </div>
+                    {photoCid && (
+                      <a href={`https://gateway.pinata.cloud/ipfs/${photoCid}`} target="_blank" rel="noopener">
+                        <img
+                          src={`https://gateway.pinata.cloud/ipfs/${photoCid}`}
+                          alt={`${entry.step_name} evidence`}
+                          className="h-24 w-24 rounded-md border border-border object-cover hover:border-madder transition-colors"
+                        />
+                      </a>
+                    )}
                   </div>
-                )}
-                <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground/80">
-                  {entry.entry_hash}
-                </p>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ol>
         </div>
 
