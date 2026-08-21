@@ -77,16 +77,34 @@ async def login(req: LoginRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # For demo accounts, accept the demo password directly
-    # In production, we'd check a stored hash
     role = _find_role_for_user(req.email)
     if not role:
-        # Check if they have a weaver record
         weaver = _find_weaver_record(req.email)
         if weaver:
             role = "weaver"
         else:
             raise HTTPException(status_code=401, detail="No role assigned to this account")
+
+    # --- Whitelist gate: enforce approval before issuing JWT ---
+    if role == "weaver":
+        weaver = _find_weaver_record(req.email)
+        if not weaver:
+            raise HTTPException(status_code=401, detail="No weaver profile found")
+        status = weaver.get("status", "pending")
+        if status == "pending":
+            raise HTTPException(status_code=403, detail="Your access request is pending admin approval")
+        if status == "rejected":
+            raise HTTPException(status_code=403, detail="Your access request was not approved")
+    elif role == "retailer":
+        client = get_client()
+        resp = client.table("retailers").select("*").eq("user_id", req.email).limit(1).execute()
+        rows = resp.data if hasattr(resp, "data") else []
+        if rows:
+            r_status = rows[0].get("request_status", "pending")
+            if r_status == "pending":
+                raise HTTPException(status_code=403, detail="Your retailer access request is pending admin approval")
+            if r_status == "rejected":
+                raise HTTPException(status_code=403, detail="Your retailer access request was not approved")
 
     token = create_token(req.email, role)
     return {
@@ -107,32 +125,51 @@ def _find_weaver_record(user_id: str) -> Optional[dict]:
     return rows[0] if rows else None
 
 
-@router.post("/register")
-async def register(req: RegisterRequest):
-    """Register a new user account."""
-    existing = _find_user_by_email(req.email)
-    if existing:
-        raise HTTPException(status_code=409, detail="Email already registered")
+@router.post("/apply-retailer")
+async def apply_retailer(body: dict):
+    """Submit a retailer application (creates pending retailer + user account)."""
+    email = body.get("email", "").strip()
+    password = body.get("password", "")
+    business_name = body.get("business_name", "").strip()
+    location = body.get("location", "").strip()
+    contact_email = body.get("contact_email", email)
 
-    _create_user(req.email, req.full_name)
+    if not email or not password or not business_name:
+        raise HTTPException(status_code=400, detail="Email, password, and business name are required")
 
-    # Assign retailer role by default (weavers apply separately)
     client = get_client()
-    client.table("user_roles").insert({
-        "user_id": req.email,
-        "role": "retailer",
+
+    # Check if user already exists
+    existing = _find_user_by_email(email)
+    if not existing:
+        _create_user(email, business_name)
+    else:
+        # Check if already has a retailer application
+        resp = client.table("retailers").select("*").eq("user_id", email).limit(1).execute()
+        rows = resp.data if hasattr(resp, "data") else []
+        if rows:
+            raise HTTPException(status_code=409, detail="Retailer application already submitted")
+
+    # Create user_roles entry
+    try:
+        client.table("user_roles").insert({
+            "user_id": email,
+            "role": "retailer",
+        }).execute()
+    except Exception:
+        pass  # May already exist
+
+    # Create retailer record (pending approval)
+    client.table("retailers").insert({
+        "user_id": email,
+        "name": business_name,
+        "business_name": business_name,
+        "location": location,
+        "contact_email": contact_email,
+        "request_status": "pending",
     }).execute()
 
-    token = create_token(req.email, "retailer")
-    return {
-        "token": token,
-        "user": {
-            "id": req.email,
-            "email": req.email,
-            "full_name": req.full_name,
-            "role": "retailer",
-        },
-    }
+    return {"message": "Retailer application submitted for GI authority review"}
 
 
 @router.post("/apply-weaver")
