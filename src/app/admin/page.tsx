@@ -12,11 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/session";
 import { adminApi } from "@/lib/api";
-import { publicApi } from "@/lib/api";
+import { AnimatedCounter } from "@/components/animated-counter";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "products" | "registry" | "flagged" | "spot-checks">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks">("dashboard");
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
@@ -34,7 +34,7 @@ export default function AdminPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "products", "registry", "flagged", "spot-checks"] as const).map((t) => (
+            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
                 {t === "spot-checks" ? "Spot Checks" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
@@ -44,6 +44,7 @@ export default function AdminPage() {
         <div className="mt-8">
           {tab === "dashboard" && <Dashboard />}
           {tab === "weavers" && <WeaverManager />}
+          {tab === "retailers" && <RetailerManager />}
           {tab === "products" && <ProductList />}
           {tab === "registry" && <RegistryManager />}
           {tab === "flagged" && <FlaggedEntries />}
@@ -79,10 +80,74 @@ function Dashboard() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="rounded-md border border-border bg-card p-5">
-          <p className="font-display text-3xl text-primary">{s.value}</p>
+          <p className="font-display text-3xl text-primary"><AnimatedCounter value={s.value} /></p>
           <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{s.label}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function RetailerManager() {
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState<string>("");
+
+  const { data: retailers } = useQuery({
+    queryKey: ["admin-retailers", filter],
+    queryFn: () => adminApi.retailers(filter || undefined),
+  });
+
+  const approve = async (id: string) => {
+    try {
+      await adminApi.approveRetailer(id);
+      toast.success("Retailer approved");
+      await qc.invalidateQueries({ queryKey: ["admin-retailers"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to approve");
+    }
+  };
+
+  const reject = async (id: string) => {
+    try {
+      await adminApi.rejectRetailer(id);
+      toast.success("Retailer rejected");
+      await qc.invalidateQueries({ queryKey: ["admin-retailers"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reject");
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        {["", "pending", "approved"].map((f) => (
+          <Button key={f} size="sm" variant={filter === f ? "madder" : "outline"} onClick={() => setFilter(f)}>
+            {f || "All"}
+          </Button>
+        ))}
+      </div>
+      <div className="mt-4 space-y-3">
+        {(!retailers || retailers.length === 0) && <p className="text-sm text-muted-foreground">No retailers found.</p>}
+        {retailers?.map((r: any) => (
+          <div key={r.id} className="flex items-center justify-between rounded-md border border-border bg-card p-4">
+            <div>
+              <p className="font-medium text-primary">{r.business_name ?? r.name}</p>
+              <p className="text-xs text-muted-foreground">{r.location} · {r.user_id}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={r.request_status === "approved" ? "default" : "secondary"}>
+                {r.request_status ?? "pending"}
+              </Badge>
+              {r.request_status !== "approved" && (
+                <>
+                  <Button size="sm" variant="gold" onClick={() => approve(r.id)}>Approve</Button>
+                  <Button size="sm" variant="outline" onClick={() => reject(r.id)}>Reject</Button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
