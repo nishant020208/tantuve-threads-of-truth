@@ -24,8 +24,9 @@ export default function ApplyPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${API_BASE}/auth/apply-weaver`, {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const url = apiBase ? `${apiBase}/auth/apply-weaver` : "/api/apply-weaver";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
