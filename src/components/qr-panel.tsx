@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
@@ -14,16 +16,16 @@ export function useQrDataUrl(value: string, size = 260) {
     }).then((d) => {
       if (active) setUrl(d);
     });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [value, size]);
   return url;
 }
 
 export function verifyUrl(productId: string) {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/verify/${productId}`;
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/verify/${productId}`;
+  }
+  return `https://tantuve.app/verify/${productId}`;
 }
 
 export function QrPanel({

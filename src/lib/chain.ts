@@ -1,6 +1,5 @@
 /**
- * Tamper-evident hash chain helpers.
- * Isomorphic: uses Web Crypto, available in the browser and the server runtime.
+ * Tamper-evident hash chain helpers — browser-side (Web Crypto).
  */
 
 export type ChainEntry = {

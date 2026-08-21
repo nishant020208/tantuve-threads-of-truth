@@ -1,15 +1,16 @@
-import { Link } from "@tanstack/react-router";
-import { Languages, Menu, QrCode } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { Languages, LogOut, Menu, QrCode } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
 import { useSession, roleHome } from "@/lib/session";
 import { IkatBorder } from "@/components/thread-divider";
 import { cn } from "@/lib/utils";
 
 export function Logo({ light = false }: { light?: boolean }) {
   return (
-    <Link to="/" className="group inline-flex items-center gap-2.5">
+    <Link href="/" className="group inline-flex items-center gap-2.5">
       <span
         className={cn(
           "grid h-9 w-9 place-items-center rounded-sm border transition-colors",
@@ -35,7 +36,7 @@ export function Logo({ light = false }: { light?: boolean }) {
 }
 
 export function LanguageToggle({ light = false }: { light?: boolean }) {
-  const { t, toggle } = useI18n();
+  const { lang, toggle } = useSession();
   return (
     <button
       onClick={toggle}
@@ -47,22 +48,26 @@ export function LanguageToggle({ light = false }: { light?: boolean }) {
       )}
     >
       <Languages className="h-3.5 w-3.5" />
-      {t("lang")}
+      {lang === "en" ? "हिन्दी" : "English"}
     </button>
   );
 }
 
+const NAV_LINKS = [
+  { href: "/scan", label: "Scan QR" },
+  { href: "/explore", label: "Explore" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/apply", label: "Become a weaver" },
+];
+
 export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
-  const { t } = useI18n();
-  const { session, role } = useSession();
+  const { session, role, logout } = useSession();
   const [open, setOpen] = useState(false);
 
-  const links = [
-    { to: "/scan", label: "Scan QR" },
-    { to: "/explore", label: t("nav_explore") },
-    { to: "/marketplace", label: t("nav_market") },
-    { to: "/apply", label: t("nav_apply") },
-  ];
+  const handleLogout = () => {
+    logout();
+    window.location.href = "/login";
+  };
 
   return (
     <header
@@ -76,10 +81,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         <Logo light={transparent} />
         <nav className="hidden items-center gap-7 md:flex">
-          {links.map((l) => (
+          {NAV_LINKS.map((l) => (
             <Link
-              key={l.to}
-              to={l.to}
+              key={l.href}
+              href={l.href}
               className={cn(
                 "text-sm font-medium transition-colors",
                 transparent
@@ -98,36 +103,42 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
             size="sm"
             className="hidden sm:inline-flex"
           >
-            <Link to="/scan">
+            <Link href="/scan">
               <QrCode className="mr-2 h-4 w-4" />
               Scan
             </Link>
           </Button>
           <LanguageToggle light={transparent} />
           {session && role ? (
-            <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm">
-              <Link to={roleHome[role]}>Dashboard</Link>
-            </Button>
+            <>
+              <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm" className="hidden sm:inline-flex">
+                <Link href={roleHome[role]}>Dashboard</Link>
+              </Button>
+              <Button
+                variant={transparent ? "outlineLight" : "outline"}
+                size="sm"
+                onClick={handleLogout}
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
             <Button asChild variant="gold" size="sm">
-              <Link to="/login">{t("nav_login")}</Link>
+              <Link href="/login">Sign in</Link>
             </Button>
           )}
-          <button
-            className="md:hidden"
-            aria-label="Menu"
-            onClick={() => setOpen((v) => !v)}
-          >
+          <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
             <Menu className="h-5 w-5" />
           </button>
         </div>
       </div>
       {open && (
         <div className="border-t border-border bg-background px-4 py-3 md:hidden">
-          {links.map((l) => (
+          {NAV_LINKS.map((l) => (
             <Link
-              key={l.to}
-              to={l.to}
+              key={l.href}
+              href={l.href}
               onClick={() => setOpen(false)}
               className="block py-2 text-sm font-medium text-foreground"
             >
@@ -155,26 +166,17 @@ export function SiteFooter() {
         <div className="text-sm">
           <p className="font-display text-gold">Explore</p>
           <div className="mt-3 flex flex-col gap-2 text-primary-foreground/75">
-            <Link to="/explore" className="hover:text-gold">
-              Verified weaves
-            </Link>
-            <Link to="/marketplace" className="hover:text-gold">
-              Marketplace
-            </Link>
-            <Link to="/apply" className="hover:text-gold">
-              Apply as a weaver
-            </Link>
-            <Link to="/login" className="hover:text-gold">
-              Sign in
-            </Link>
+            <Link href="/explore" className="hover:text-gold">Verified weaves</Link>
+            <Link href="/marketplace" className="hover:text-gold">Marketplace</Link>
+            <Link href="/apply" className="hover:text-gold">Apply as a weaver</Link>
+            <Link href="/login" className="hover:text-gold">Sign in</Link>
           </div>
         </div>
         <div className="text-sm text-primary-foreground/70">
           <p className="font-display text-gold">On scale</p>
           <p className="mt-3">
-            This MVP demonstrates tamper-evident ledger logic with a backend-hosted SHA-256 hash
-            chain. A production deployment would anchor periodic checkpoint hashes to a public
-            chain such as Polygon and sync directly with the Government of India GI registry.
+            This MVP demonstrates tamper-evident ledger logic with IPFS-anchored hash verification.
+            A production deployment would sync directly with the Government of India GI registry.
           </p>
         </div>
       </div>

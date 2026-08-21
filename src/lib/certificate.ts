@@ -11,6 +11,8 @@ export type CertificateInput = {
   steps: { seq: number; step_name: string; timestamp: string; entry_hash: string }[];
   qrDataUrl?: string | null;
   verifyUrl: string;
+  ipfsCid?: string | null;
+  ipfsUrl?: string | null;
 };
 
 export function downloadCertificate(input: CertificateInput) {
@@ -63,8 +65,7 @@ export function downloadCertificate(input: CertificateInput) {
   for (const s of input.steps) {
     doc.text(
       `${s.seq}. ${s.step_name.replace(/_/g, " ")} — ${new Date(s.timestamp).toLocaleString()}`,
-      56,
-      y,
+      56, y,
     );
     y += 14;
     doc.setTextColor(120, 120, 120);
@@ -81,6 +82,23 @@ export function downloadCertificate(input: CertificateInput) {
   doc.setFontSize(9);
   doc.text(doc.splitTextToSize(input.finalHash, W - 112), 56, y);
   y += 30;
+
+  if (input.ipfsCid) {
+    doc.setFont("helvetica", "bold");
+    doc.text("IPFS anchor", 56, y);
+    y += 14;
+    doc.setFont("courier", "normal");
+    doc.text(input.ipfsCid, 56, y);
+    y += 14;
+    if (input.ipfsUrl) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(input.ipfsUrl, 56, y);
+      y += 16;
+    }
+  }
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
