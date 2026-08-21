@@ -241,6 +241,47 @@ async def review_spot_check(product_id: str, body: dict, user: dict = Depends(ge
     return {"message": f"Spot check {new_status}"}
 
 
+@router.get("/retailers")
+async def list_retailers(status: str = None, user: dict = Depends(get_current_user)):
+    """List all retailers, optionally filtered by status."""
+    _require_admin(user)
+    client = get_client()
+    q = client.table("retailers").select("*").order("created_at", ascending=False)
+    if status:
+        q = q.eq("request_status", status)
+    resp = q.execute()
+    return resp.data if hasattr(resp, "data") else []
+
+
+@router.post("/retailers/{retailer_id}/approve")
+async def approve_retailer(retailer_id: str, user: dict = Depends(get_current_user)):
+    """Approve a retailer."""
+    _require_admin(user)
+    client = get_client()
+    client.table("retailers").update({
+        "request_status": "approved",
+    }).eq("id", retailer_id).execute()
+    try:
+        client.table("notifications").insert({
+            "user_id": retailer_id,
+            "message": "Your retailer application has been approved! You can now log in.",
+        }).execute()
+    except Exception:
+        pass
+    return {"message": "Retailer approved"}
+
+
+@router.post("/retailers/{retailer_id}/reject")
+async def reject_retailer(retailer_id: str, user: dict = Depends(get_current_user)):
+    """Reject a retailer application."""
+    _require_admin(user)
+    client = get_client()
+    client.table("retailers").update({
+        "request_status": "rejected",
+    }).eq("id", retailer_id).execute()
+    return {"message": "Retailer application rejected"}
+
+
 @router.get("/analytics")
 async def analytics(user: dict = Depends(get_current_user)):
     """Get analytics data for the admin dashboard."""
