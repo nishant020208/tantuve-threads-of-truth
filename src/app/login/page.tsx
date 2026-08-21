@@ -33,6 +33,8 @@ export default function LoginPage() {
         toast.error(msg, { duration: 6000 });
       } else if (msg.includes("not approved")) {
         toast.error(msg, { duration: 6000 });
+      } else if (msg.includes("Unable to connect")) {
+        toast.error("Cannot reach the server. The backend may be starting up.", { duration: 5000 });
       } else {
         toast.error(msg);
       }
