@@ -12,10 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/session";
 import { adminApi } from "@/lib/api";
+import { publicApi } from "@/lib/api";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "products" | "registry">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "weavers" | "products" | "registry" | "flagged" | "spot-checks">("dashboard");
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
@@ -33,9 +34,9 @@ export default function AdminPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "products", "registry"] as const).map((t) => (
+            {(["dashboard", "weavers", "products", "registry", "flagged", "spot-checks"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === "spot-checks" ? "Spot Checks" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
             ))}
           </div>
@@ -45,6 +46,8 @@ export default function AdminPage() {
           {tab === "weavers" && <WeaverManager />}
           {tab === "products" && <ProductList />}
           {tab === "registry" && <RegistryManager />}
+          {tab === "flagged" && <FlaggedEntries />}
+          {tab === "spot-checks" && <SpotChecks />}
         </div>
       </div>
       <SiteFooter />
@@ -168,6 +171,92 @@ function ProductList() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function FlaggedEntries() {
+  const qc = useQueryClient();
+  const { data: entries } = useQuery({ queryKey: ["admin-flagged"], queryFn: adminApi.flagged });
+
+  const review = async (entryId: string, action: string) => {
+    try {
+      await adminApi.reviewFlagged(entryId, action);
+      toast.success(action === "escalate" ? "Escalated to disputes" : "Marked as reviewed");
+      await qc.invalidateQueries({ queryKey: ["admin-flagged"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Entries flagged for suspicious timing (less than 2 hours between steps).
+      </p>
+      {(!entries || entries.length === 0) && <p className="text-sm text-muted-foreground">No flagged entries.</p>}
+      <div className="space-y-3">
+        {entries?.map((e: any) => (
+          <div key={e.id} className="rounded-md border border-gold/40 bg-gold/5 p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-primary">
+                  {e.products?.title ?? e.product_id} — step {e.seq}: {e.step_name?.replace(/_/g, " ")}
+                </p>
+                <p className="text-xs text-gold">⚠ {e.flagged_reason}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {e.actor} · {new Date(e.timestamp).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => review(e.id, "reviewed")}>Looks fine</Button>
+                <Button size="sm" variant="madder" onClick={() => review(e.id, "escalate")}>Escalate</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SpotChecks() {
+  const qc = useQueryClient();
+  const { data: products } = useQuery({ queryKey: ["admin-spot-checks"], queryFn: adminApi.spotChecks });
+
+  const review = async (productId: string, action: string) => {
+    try {
+      await adminApi.reviewSpotCheck(productId, action);
+      toast.success(action === "escalate" ? "Escalated to disputes" : "Marked as reviewed");
+      await qc.invalidateQueries({ queryKey: ["admin-spot-checks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Randomly selected completed products for manual audit (10-15% of completions).
+      </p>
+      {(!products || products.length === 0) && <p className="text-sm text-muted-foreground">No pending spot checks.</p>}
+      <div className="space-y-3">
+        {products?.filter((p: any) => p.spot_check_status === "pending").map((p: any) => (
+          <div key={p.id} className="rounded-md border border-border bg-card p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-primary">{p.title ?? p.id}</p>
+                <p className="font-mono text-xs text-muted-foreground">{p.id} · {p.craft_type} · {p.weavers?.region}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button asChild size="sm" variant="ghost"><Link href={`/verify/${p.id}`}>View ledger →</Link></Button>
+                <Button size="sm" variant="outline" onClick={() => review(p.id, "review")}>Looks fine</Button>
+                <Button size="sm" variant="madder" onClick={() => review(p.id, "escalate")}>Escalate</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
