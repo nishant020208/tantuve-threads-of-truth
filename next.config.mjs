@@ -6,8 +6,9 @@ const nextConfig = {
       { protocol: "https", hostname: "gateway.pinata.cloud" },
       { protocol: "https", hostname: "ipfs.io" },
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
