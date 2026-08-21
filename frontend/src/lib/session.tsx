@@ -80,6 +80,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Best-effort server-side logout (clear httpOnly cookie if present)
+    fetch(`${API_BASE}/auth/logout`, { method: "POST" }).catch(() => {});
     setToken(null);
     setSession(null);
     localStorage.removeItem("tantuve-token");
