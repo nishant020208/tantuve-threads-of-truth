@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Languages, Menu, QrCode } from "lucide-react";
+import { Languages, LogOut, Menu, QrCode } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession, roleHome } from "@/lib/session";
@@ -61,8 +61,13 @@ const NAV_LINKS = [
 ];
 
 export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
-  const { session, role } = useSession();
+  const { session, role, logout } = useSession();
   const [open, setOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = "/login";
+  };
 
   return (
     <header
@@ -105,9 +110,19 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
           </Button>
           <LanguageToggle light={transparent} />
           {session && role ? (
-            <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm">
-              <Link href={roleHome[role]}>Dashboard</Link>
-            </Button>
+            <>
+              <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm" className="hidden sm:inline-flex">
+                <Link href={roleHome[role]}>Dashboard</Link>
+              </Button>
+              <Button
+                variant={transparent ? "outlineLight" : "outline"}
+                size="sm"
+                onClick={handleLogout}
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
             <Button asChild variant="gold" size="sm">
               <Link href="/login">Sign in</Link>
