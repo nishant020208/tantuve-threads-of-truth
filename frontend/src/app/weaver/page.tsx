@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
@@ -52,18 +52,38 @@ export default function WeaverPage() {
     setBusy(false);
   };
 
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [stepBusy, setStepBusy] = useState<string | null>(null);
+
   const logStep = async (productId: string, stepKey: string, label: string) => {
+    setStepBusy(stepKey);
     try {
+      let photo_base64: string | undefined;
+      if (photoFile) {
+        photo_base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Strip data URL prefix
+            resolve(result.split(",")[1] || "");
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(photoFile);
+        });
+      }
       await weaverApi.appendStep(productId, {
         step_name: stepKey,
         step_data: { note: `${label} completed`, recorded_by: session.full_name || "weaver" },
         actor: session.full_name || "weaver",
+        photo_base64,
       });
-      toast.success(`${label} added to the ledger`);
+      toast.success(`${label} added to the ledger${photo_base64 ? " (with photo evidence)" : ""}`);
+      setPhotoFile(null);
       await qc.invalidateQueries({ queryKey: ["weaver-products"] });
     } catch (err: any) {
       toast.error(err.message || "Could not log step");
     }
+    setStepBusy(null);
   };
 
   const completeProduct = async (productId: string) => {
@@ -130,19 +150,30 @@ export default function WeaverPage() {
                   </div>
 
                   {p.status !== "completed" && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {PRODUCTION_STEPS.map((s) => (
-                        <Button
-                          key={s.key}
-                          size="sm"
-                          variant={logged.has(s.key) ? "secondary" : "outline"}
-                          disabled={logged.has(s.key)}
-                          onClick={() => logStep(p.id, s.key, s.label)}
-                        >
-                          {logged.has(s.key) ? `✓ ${s.label}` : `Log ${s.label}`}
-                        </Button>
-                      ))}
-                    </div>
+                    <>
+                      <div className="mt-4">
+                        <Label className="text-xs text-muted-foreground">Photo evidence (optional, strongly recommended)</Label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-sm file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground hover:file:bg-primary/90"
+                          onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                        />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {PRODUCTION_STEPS.map((s) => (
+                          <Button
+                            key={s.key}
+                            size="sm"
+                            variant={logged.has(s.key) ? "secondary" : "outline"}
+                            disabled={logged.has(s.key) || stepBusy === s.key}
+                            onClick={() => logStep(p.id, s.key, s.label)}
+                          >
+                            {stepBusy === s.key ? "Uploading…" : logged.has(s.key) ? `✓ ${s.label}` : `Log ${s.label}`}
+                          </Button>
+                        ))}
+                      </div>
+                    </>
                   )}
 
                   {allStepsLogged && p.status !== "completed" && (
