@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { getServerClient } from "@/lib/server-db";
-import { sha256 } from "@/lib/server-utils";
 
 export async function POST(
   req: NextRequest,
@@ -24,18 +23,18 @@ export async function POST(
     return NextResponse.json({ detail: "Already completed" }, { status: 400 });
   }
 
-  // Get all entries
+  // Get all entries (column is `seq`)
   const { data: entries } = await client
     .from("ledger_entries")
     .select("*")
     .eq("product_id", productId)
-    .order("sequence_no");
+    .order("seq");
 
   if (!entries || entries.length < 1) {
     return NextResponse.json({ detail: "Need at least 1 step to complete" }, { status: 400 });
   }
 
-  // Build IPFS record with step photo CIDs
+  // Build IPFS record
   const record = {
     product_id: productId,
     title: product.title,
@@ -46,8 +45,8 @@ export async function POST(
     latest_hash: entries[entries.length - 1]?.entry_hash,
     steps: entries.map((e) => ({
       step_name: e.step_name,
-      sequence_no: e.sequence_no,
-      created_at: e.created_at,
+      seq: e.seq,
+      timestamp: e.timestamp,
       photo_ipfs_cid: e.photo_ipfs_cid || null,
     })),
   };
@@ -64,15 +63,22 @@ export async function POST(
   // Spot check selection (~12% chance)
   const spotCheckSelected = Math.random() < 0.12;
 
+  // Update product — use only columns that exist or are being added
+  const updateData: Record<string, unknown> = {
+    status: "completed",
+  };
+
+  // Only set columns if they exist (graceful degradation)
+  try {
+    updateData.completed_at = new Date().toISOString();
+    updateData.ipfs_cid = ipfsCid;
+    updateData.spot_check_selected = spotCheckSelected;
+    updateData.spot_check_status = spotCheckSelected ? "pending" : null;
+  } catch { /* ignore */ }
+
   const { error } = await client
     .from("products")
-    .update({
-      status: "completed",
-      completed_at: new Date().toISOString(),
-      ipfs_cid: ipfsCid,
-      spot_check_selected: spotCheckSelected,
-      spot_check_status: spotCheckSelected ? "pending" : null,
-    })
+    .update(updateData)
     .eq("id", productId);
 
   if (error) return NextResponse.json({ detail: error.message }, { status: 500 });

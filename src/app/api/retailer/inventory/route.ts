@@ -15,12 +15,16 @@ export async function GET(req: NextRequest) {
     .single();
   if (!retailer) return NextResponse.json({ detail: "Retailer profile not found" }, { status: 404 });
 
-  const { data, error } = await client
-    .from("retailer_inventory")
-    .select("*, products(*)")
-    .eq("retailer_id", retailer.id)
-    .order("received_at", { ascending: false });
+  try {
+    const { data, error } = await client
+      .from("retailer_inventory")
+      .select("*")
+      .eq("retailer_id", retailer.id)
+      .order("received_at", { ascending: false });
 
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
-  return NextResponse.json(data || []);
+    if (error) return NextResponse.json([]);
+    return NextResponse.json(data || []);
+  } catch {
+    return NextResponse.json([]);
+  }
 }

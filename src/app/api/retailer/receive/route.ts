@@ -21,12 +21,26 @@ export async function POST(req: NextRequest) {
     .single();
   if (!retailer) return NextResponse.json({ detail: "Retailer profile not found" }, { status: 404 });
 
-  const { error } = await client.from("retailer_inventory").insert({
-    product_id: body.product_id,
-    retailer_id: retailer.id,
-    received_at: new Date().toISOString(),
-  });
+  // Verify product exists
+  const { data: product } = await client
+    .from("products")
+    .select("id, status")
+    .eq("id", body.product_id)
+    .single();
+  if (!product) return NextResponse.json({ detail: "Product not found" }, { status: 404 });
 
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+  try {
+    const { error } = await client.from("retailer_inventory").insert({
+      product_id: body.product_id,
+      retailer_id: retailer.id,
+      received_at: new Date().toISOString(),
+    });
+
+    if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+  } catch {
+    // retailer_inventory table might not exist yet
+    return NextResponse.json({ detail: "Inventory system not yet available. Please run migration 006." }, { status: 503 });
+  }
+
+  return NextResponse.json({ success: true, productId: body.product_id });
 }
