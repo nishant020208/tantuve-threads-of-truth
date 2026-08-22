@@ -85,9 +85,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       className={cn(
         "sticky top-0 z-50 w-full border-b backdrop-blur",
         transparent
-          ? "border-gold/20 bg-primary/70 text-primary-foreground"
+          ? "border-gold/20 bg-primary/70"
           : "border-border bg-background/90",
       )}
+      style={transparent ? { color: "var(--band-text)" } : undefined}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         <Logo light={transparent} />
@@ -97,9 +98,8 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               key={l.href}
               href={l.href}
               className={cn(
-                "text-sm font-medium transition-colors",
-                transparent
-                  ? "text-primary-foreground/80 hover:text-gold"
+                "text-sm font-medium transition-colors",                  transparent
+                  ? "hover:text-gold"
                   : "text-muted-foreground hover:text-madder",
               )}
             >
@@ -112,7 +112,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
             asChild
             variant={transparent ? "outlineLight" : "outline"}
             size="sm"
-            className="hidden sm:inline-flex"
+            className="hidden md:inline-flex"
           >
             <Link href="/scan">
               <QrCode className="mr-2 h-4 w-4" />
@@ -122,7 +122,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
           <LanguageToggle light={transparent} />
           {session && role ? (
             <>
-              <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm" className="hidden sm:inline-flex">
+              <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm" className="hidden md:inline-flex">
                 <Link href={roleHome[role]}>Dashboard</Link>
               </Button>
               <Button
@@ -135,12 +135,12 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               </Button>
             </>
           ) : (
-            <Button asChild variant="gold" size="sm">
+            <Button asChild variant="gold" size="sm" className="hidden md:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
           )}
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-md md:hidden"
+            className="hidden"
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
           >
@@ -220,20 +220,20 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 md:grid-cols-3">
         <div>
           <Logo light />
-          <p className="mt-4 max-w-xs text-sm text-primary-foreground/70">
+          <p className="mt-4 max-w-xs text-sm" style={{ color: "color-mix(in oklab, var(--band-text) 70%, transparent)" }}>
             Tantuve — tamper-evident provenance for India&apos;s GI-protected handloom traditions.
           </p>
         </div>
         <div className="text-sm">
           <p className="font-display text-gold">Explore</p>
-          <div className="mt-3 flex flex-col gap-2 text-primary-foreground/75">
+          <div className="mt-3 flex flex-col gap-2" style={{ color: "color-mix(in oklab, var(--band-text) 75%, transparent)" }}>
             <Link href="/explore" className="hover:text-gold">Verified weaves</Link>
             <Link href="/marketplace" className="hover:text-gold">Marketplace</Link>
             <Link href="/apply" className="hover:text-gold">Apply as a weaver</Link>
             <Link href="/login" className="hover:text-gold">Sign in</Link>
           </div>
         </div>
-        <div className="text-sm text-primary-foreground/70">
+        <div className="text-sm" style={{ color: "color-mix(in oklab, var(--band-text) 70%, transparent)" }}>
           <p className="font-display text-gold">On scale</p>
           <p className="mt-3">
             This MVP demonstrates tamper-evident ledger logic with IPFS-anchored hash verification.
