@@ -26,7 +26,8 @@ import {
   Palette,
   ShieldCheck,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { useSession, roleHome } from "@/lib/session";
 import { useTheme, type ThemeMode } from "@/lib/theme";
@@ -164,14 +165,18 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         ? ADMIN_LINKS
         : RETAILER_LINKS;
 
-  // Close mobile menu on escape
+  // Close mobile menu on escape + lock scroll
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
     if (open) {
       document.addEventListener("keydown", handleEsc);
-      return () => document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.removeEventListener("keydown", handleEsc);
+        document.body.style.overflow = "";
+      };
     }
   }, [open]);
 
@@ -259,43 +264,46 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         </div>
       </div>
 
-      {/* Mobile slide-out menu */}
-      {open && (
+      {/* Mobile slide-out menu — portaled to body to escape header stacking context */}
+      {open && typeof document !== "undefined" && createPortal(
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden"
+            style={{ zIndex: 9998 }}
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-[70] w-72 border-l border-border bg-background p-6 shadow-2xl lg:hidden" style={{ backgroundColor: "var(--background)" }}>
-            <div className="flex items-center justify-between mb-6">
+          {/* Menu panel */}
+          <div className="fixed inset-y-0 right-0 w-72 border-l shadow-2xl lg:hidden flex flex-col" style={{ zIndex: 9999, backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+            <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: "var(--border)" }}>
               <Logo />
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-md"
+                className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" style={{ color: "var(--foreground)" }} />
               </button>
             </div>
 
             {/* Mobile nav links */}
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
               {navLinks.map((l) => (
                 <Link
                   key={`mobile-${l.href}-${l.label}`}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="flex h-12 items-center gap-3 rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
+                  className="flex h-12 items-center gap-3 rounded-md px-3 text-base font-medium hover:bg-muted"
+                  style={{ color: "var(--foreground)" }}
                 >
-                  <l.icon className="h-5 w-5 text-muted-foreground" />
+                  <l.icon className="h-5 w-5" style={{ color: "var(--muted-foreground)" }} />
                   {l.label}
                 </Link>
               ))}
             </nav>
 
             {/* Mobile bottom section */}
-            <div className="mt-6 border-t border-border pt-4 space-y-3">
+            <div className="border-t p-4 space-y-3" style={{ borderColor: "var(--border)" }}>
               {/* Theme and language controls */}
               <div className="flex gap-2">
                 <ThemeToggleBtn />
@@ -327,7 +335,8 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
       <IkatBorder className="opacity-40" />
     </header>
