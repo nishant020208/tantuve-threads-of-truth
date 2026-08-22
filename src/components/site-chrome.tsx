@@ -1,16 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { Languages, LogOut, Menu, QrCode, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Languages,
+  LogOut,
+  Menu,
+  QrCode,
+  X,
+  Home,
+  Scan,
+  Compass,
+  LogIn,
+  Package,
+  PlusCircle,
+  User,
+  Users,
+  Store,
+  FileText,
+  ScrollText,
+  AlertTriangle,
+  ScanBarcode,
+  Sun,
+  Moon,
+  Palette,
+  ShieldCheck,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession, roleHome } from "@/lib/session";
+import { useTheme, type ThemeMode } from "@/lib/theme";
 import { IkatBorder } from "@/components/thread-divider";
 import { cn } from "@/lib/utils";
 
+/* ─── Logo ─── */
+
 export function Logo({ light = false }: { light?: boolean }) {
   return (
-    <Link href="/" className="group inline-flex items-center gap-2.5">
+    <Link href="/" className="group inline-flex items-center gap-2.5 shrink-0">
       <span
         className={cn(
           "grid h-9 w-9 place-items-center rounded-sm border transition-colors",
@@ -35,6 +62,8 @@ export function Logo({ light = false }: { light?: boolean }) {
   );
 }
 
+/* ─── Language Toggle ─── */
+
 export function LanguageToggle({ light = false }: { light?: boolean }) {
   const { lang, toggle } = useSession();
   return (
@@ -53,21 +82,87 @@ export function LanguageToggle({ light = false }: { light?: boolean }) {
   );
 }
 
-const NAV_LINKS = [
-  { href: "/scan", label: "Scan QR" },
-  { href: "/explore", label: "Explore" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/apply", label: "Become a weaver" },
+/* ─── Theme Toggle Button ─── */
+
+function ThemeToggleBtn({ light = false }: { light?: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const next: Record<ThemeMode, ThemeMode> = { aesthetic: "white", white: "black", black: "aesthetic" };
+  const icons: Record<ThemeMode, React.ReactNode> = {
+    aesthetic: <Palette className="h-4 w-4" />,
+    white: <Sun className="h-4 w-4" />,
+    black: <Moon className="h-4 w-4" />,
+  };
+  const labels: Record<ThemeMode, string> = {
+    aesthetic: "Aesthetic",
+    white: "White",
+    black: "Dark",
+  };
+  return (
+    <button
+      onClick={() => setTheme(next[theme])}
+      title={`Theme: ${labels[theme]}`}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        light
+          ? "border-gold/40 text-gold hover:bg-gold hover:text-gold-foreground"
+          : "border-border text-muted-foreground hover:border-primary hover:text-primary",
+      )}
+    >
+      {icons[theme]}
+      <span className="hidden sm:inline">{labels[theme]}</span>
+    </button>
+  );
+}
+
+/* ─── Navigation link definitions per role ─── */
+
+const PUBLIC_LINKS = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/scan", label: "Scan QR", icon: Scan },
+  { href: "/explore", label: "Explore", icon: Compass },
+  { href: "/marketplace", label: "Marketplace", icon: Store },
 ];
 
+const WEAVER_LINKS = [
+  { href: "/weaver", label: "My Products", icon: Package },
+  { href: "/weaver", label: "New Product", icon: PlusCircle },
+];
+
+const ADMIN_LINKS = [
+  { href: "/admin", label: "Dashboard", icon: ShieldCheck },
+  { href: "/admin", label: "Weavers", icon: Users },
+  { href: "/admin", label: "Retailers", icon: Store },
+  { href: "/admin", label: "Products", icon: Package },
+  { href: "/admin", label: "Registry", icon: ScrollText },
+  { href: "/admin", label: "Disputes", icon: AlertTriangle },
+];
+
+const RETAILER_LINKS = [
+  { href: "/retailer", label: "Inventory", icon: FileText },
+  { href: "/retailer", label: "Receive", icon: ScanBarcode },
+];
+
+/* ─── Site Header ─── */
+
 export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
+  const router = useRouter();
   const { session, role, logout } = useSession();
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/login";
+    router.push("/login");
+    setOpen(false);
   };
+
+  // Determine which links to show
+  const navLinks = !session || !role
+    ? PUBLIC_LINKS
+    : role === "weaver"
+      ? WEAVER_LINKS
+      : role === "admin"
+        ? ADMIN_LINKS
+        : RETAILER_LINKS;
 
   // Close mobile menu on escape
   useEffect(() => {
@@ -91,28 +186,34 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       style={transparent ? { color: "var(--band-text)" } : undefined}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+        {/* Logo */}
         <Logo light={transparent} />
-        <nav className="hidden items-center gap-7 md:flex">
-          {NAV_LINKS.map((l) => (
+
+        {/* Desktop nav links */}
+        <nav className="hidden items-center gap-1 lg:flex">
+          {navLinks.map((l) => (
             <Link
-              key={l.href}
+              key={`${l.href}-${l.label}`}
               href={l.href}
               className={cn(
-                "text-sm font-medium transition-colors",                  transparent
-                  ? "hover:text-gold"
-                  : "text-muted-foreground hover:text-madder",
+                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                transparent
+                  ? "text-primary-foreground/80 hover:bg-white/10 hover:text-gold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               {l.label}
             </Link>
           ))}
         </nav>
+
+        {/* Right-side actions */}
         <div className="flex items-center gap-2">
           <Button
             asChild
             variant={transparent ? "outlineLight" : "outline"}
             size="sm"
-            className="hidden md:inline-flex"
+            className="hidden lg:inline-flex"
           >
             <Link href="/scan">
               <QrCode className="mr-2 h-4 w-4" />
@@ -120,9 +221,16 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
             </Link>
           </Button>
           <LanguageToggle light={transparent} />
+          <ThemeToggleBtn light={transparent} />
+
           {session && role ? (
             <>
-              <Button asChild variant={transparent ? "outlineLight" : "outline"} size="sm" className="hidden md:inline-flex">
+              <Button
+                asChild
+                variant={transparent ? "outlineLight" : "outline"}
+                size="sm"
+                className="hidden lg:inline-flex"
+              >
                 <Link href={roleHome[role]}>Dashboard</Link>
               </Button>
               <Button
@@ -135,12 +243,14 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               </Button>
             </>
           ) : (
-            <Button asChild variant="gold" size="sm" className="hidden md:inline-flex">
+            <Button asChild variant="gold" size="sm" className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
           )}
+
+          {/* Mobile hamburger */}
           <button
-            className="hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-md lg:hidden"
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
           >
@@ -154,10 +264,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-72 border-l border-border bg-background p-6 shadow-xl md:hidden">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 border-l border-border bg-background p-6 shadow-xl lg:hidden">
             <div className="flex items-center justify-between mb-6">
               <Logo />
               <button
@@ -168,40 +278,51 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Mobile nav links */}
             <nav className="flex flex-col gap-1">
-              {NAV_LINKS.map((l) => (
+              {navLinks.map((l) => (
                 <Link
-                  key={l.href}
+                  key={`mobile-${l.href}-${l.label}`}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="flex h-12 items-center rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
+                  className="flex h-12 items-center gap-3 rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
                 >
+                  <l.icon className="h-5 w-5 text-muted-foreground" />
                   {l.label}
                 </Link>
               ))}
-              {session && role && (
-                <Link
-                  href={roleHome[role]}
-                  onClick={() => setOpen(false)}
-                  className="flex h-12 items-center rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
-                >
-                  Dashboard
-                </Link>
-              )}
             </nav>
-            <div className="mt-6 border-t border-border pt-4">
+
+            {/* Mobile bottom section */}
+            <div className="mt-6 border-t border-border pt-4 space-y-3">
+              {/* Theme and language controls */}
+              <div className="flex gap-2">
+                <ThemeToggleBtn />
+                <LanguageToggle />
+              </div>
+
               {session && role ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => { handleLogout(); setOpen(false); }}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </Button>
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={roleHome[role]} onClick={() => setOpen(false)}>
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </Button>
+                </>
               ) : (
                 <Button asChild variant="madder" className="w-full">
-                  <Link href="/login" onClick={() => setOpen(false)}>Sign in</Link>
+                  <Link href="/login" onClick={() => setOpen(false)}>
+                    Sign in
+                  </Link>
                 </Button>
               )}
             </div>
@@ -212,6 +333,8 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
     </header>
   );
 }
+
+/* ─── Footer ─── */
 
 export function SiteFooter() {
   return (
