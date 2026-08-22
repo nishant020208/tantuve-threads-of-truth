@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { QrCode, X } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/lib/session";
 import { retailerApi } from "@/lib/api";
+import { QrScanner } from "@/components/qr-scanner";
 
 export default function RetailerPage() {
   const { session, role, loading } = useSession();
@@ -64,14 +66,17 @@ function ReceiveProduct() {
   const qc = useQueryClient();
   const [productId, setProductId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
-  const receive = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const receive = async (id?: string) => {
+    const pid = (id || productId).trim();
+    if (!pid) return;
     setBusy(true);
     try {
-      const res = await retailerApi.receive(productId);
-      toast.success(`Product ${res.productId ?? productId} received into inventory`);
+      const res = await retailerApi.receive(pid.toUpperCase());
+      toast.success(`Product ${res.productId ?? pid} received into inventory`);
       setProductId("");
+      setShowScanner(false);
       await qc.invalidateQueries({ queryKey: ["retailer-inventory"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to receive product");
@@ -79,26 +84,65 @@ function ReceiveProduct() {
     setBusy(false);
   };
 
+  const handleScan = (decodedText: string) => {
+    // Extract product ID from URL or raw text
+    let pid = decodedText;
+    const verifyMatch = decodedText.match(/\/verify\/([A-Za-z0-9_-]+)/);
+    if (verifyMatch) pid = verifyMatch[1];
+    pid = pid.toUpperCase().trim();
+    setProductId(pid);
+    setShowScanner(false);
+    // Auto-submit after scan
+    receive(pid);
+  };
+
   return (
-    <form onSubmit={receive} className="max-w-md rounded-md border border-border bg-card p-6">
-      <h2 className="font-display text-xl text-primary">Receive a textile</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Enter the product ID printed on the QR tag to log custody transfer.
-      </p>
-      <div className="mt-4">
-        <Label htmlFor="pid">Product ID</Label>
-        <Input
-          id="pid"
-          required
-          placeholder="e.g. TNT-PTL-00231"
-          value={productId}
-          onChange={(e) => setProductId(e.target.value.toUpperCase())}
-        />
+    <div className="max-w-md space-y-4">
+      <div className="rounded-md border border-border bg-card p-6">
+        <h2 className="font-display text-xl text-primary">Receive a textile</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter the product ID or scan the QR tag to log custody transfer.
+        </p>
+
+        {/* Camera scan button */}
+        {!showScanner ? (
+          <Button
+            onClick={() => setShowScanner(true)}
+            variant="outline"
+            className="mt-4 w-full"
+          >
+            <QrCode className="mr-2 h-4 w-4" />
+            Scan QR to receive
+          </Button>
+        ) : (
+          <div className="mt-4">
+            <QrScanner
+              onScan={handleScan}
+              onClose={() => setShowScanner(false)}
+              label="Scan product QR code"
+              inline
+            />
+          </div>
+        )}
+
+        {/* Manual entry */}
+        <form onSubmit={(e) => { e.preventDefault(); receive(); }} className="mt-4">
+          <div>
+            <Label htmlFor="pid">Product ID</Label>
+            <Input
+              id="pid"
+              required
+              placeholder="e.g. TNT-JPCR-QXS4"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value.toUpperCase())}
+            />
+          </div>
+          <Button type="submit" variant="madder" className="mt-4" disabled={busy}>
+            {busy ? "Receiving…" : "Confirm receipt"}
+          </Button>
+        </form>
       </div>
-      <Button type="submit" variant="madder" className="mt-4" disabled={busy}>
-        {busy ? "Receiving…" : "Confirm receipt"}
-      </Button>
-    </form>
+    </div>
   );
 }
 
