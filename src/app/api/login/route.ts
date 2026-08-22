@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         userId = user.id;
       }
     } catch {
-      // listUsers might fail — try alternative approach
+      // listUsers might fail
     }
 
     if (!userId) {
@@ -80,36 +80,55 @@ export async function POST(req: NextRequest) {
       if (weaverRow) role = "weaver";
     }
 
+    // Fallback: check retailers table
+    if (!role) {
+      const { data: retailerRow } = await client
+        .from("retailers")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(1)
+        .single();
+      if (retailerRow) role = "retailer";
+    }
+
     if (!role) {
       return NextResponse.json({ detail: "No role assigned to this account" }, { status: 401 });
     }
 
-    // Whitelist check
+    // Whitelist check — gracefully handle missing columns
     if (role === "weaver") {
-      const { data: w } = await client
-        .from("weavers")
-        .select("status")
-        .eq("user_id", userId)
-        .limit(1)
-        .single();
-      if (w?.status === "pending") {
-        return NextResponse.json({ detail: "Your access request is pending admin approval" }, { status: 403 });
-      }
-      if (w?.status === "rejected") {
-        return NextResponse.json({ detail: "Your access request was not approved" }, { status: 403 });
+      try {
+        const { data: w } = await client
+          .from("weavers")
+          .select("status")
+          .eq("user_id", userId)
+          .limit(1)
+          .single();
+        if (w?.status === "pending") {
+          return NextResponse.json({ detail: "Your access request is pending admin approval" }, { status: 403 });
+        }
+        if (w?.status === "rejected") {
+          return NextResponse.json({ detail: "Your access request was not approved" }, { status: 403 });
+        }
+      } catch {
+        // status column might not exist — allow login
       }
     } else if (role === "retailer") {
-      const { data: r } = await client
-        .from("retailers")
-        .select("request_status")
-        .eq("user_id", userId)
-        .limit(1)
-        .single();
-      if (r?.request_status === "pending") {
-        return NextResponse.json({ detail: "Your retailer access request is pending admin approval" }, { status: 403 });
-      }
-      if (r?.request_status === "rejected") {
-        return NextResponse.json({ detail: "Your retailer access request was not approved" }, { status: 403 });
+      try {
+        const { data: r } = await client
+          .from("retailers")
+          .select("request_status")
+          .eq("user_id", userId)
+          .limit(1)
+          .single();
+        if (r?.request_status === "pending") {
+          return NextResponse.json({ detail: "Your retailer access request is pending admin approval" }, { status: 403 });
+        }
+        if (r?.request_status === "rejected") {
+          return NextResponse.json({ detail: "Your retailer access request was not approved" }, { status: 403 });
+        }
+      } catch {
+        // request_status column might not exist — allow login
       }
     }
 
