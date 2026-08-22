@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Languages, LogOut, Menu, QrCode } from "lucide-react";
-import { useState } from "react";
+import { Languages, LogOut, Menu, QrCode, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession, roleHome } from "@/lib/session";
 import { IkatBorder } from "@/components/thread-divider";
@@ -69,6 +69,17 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
     window.location.href = "/login";
   };
 
+  // Close mobile menu on escape
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) {
+      document.addEventListener("keydown", handleEsc);
+      return () => document.removeEventListener("keydown", handleEsc);
+    }
+  }, [open]);
+
   return (
     <header
       className={cn(
@@ -128,24 +139,74 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               <Link href="/login">Sign in</Link>
             </Button>
           )}
-          <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
-            <Menu className="h-5 w-5" />
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-md md:hidden"
+            aria-label="Menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile slide-out menu */}
       {open && (
-        <div className="border-t border-border bg-background px-4 py-3 md:hidden">
-          {NAV_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="block py-2 text-sm font-medium text-foreground"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 z-50 w-72 border-l border-border bg-background p-6 shadow-xl md:hidden">
+            <div className="flex items-center justify-between mb-6">
+              <Logo />
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-md"
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-1">
+              {NAV_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 items-center rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
+                >
+                  {l.label}
+                </Link>
+              ))}
+              {session && role && (
+                <Link
+                  href={roleHome[role]}
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 items-center rounded-md px-3 text-base font-medium text-foreground hover:bg-muted"
+                >
+                  Dashboard
+                </Link>
+              )}
+            </nav>
+            <div className="mt-6 border-t border-border pt-4">
+              {session && role ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => { handleLogout(); setOpen(false); }}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              ) : (
+                <Button asChild variant="madder" className="w-full">
+                  <Link href="/login" onClick={() => setOpen(false)}>Sign in</Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
       )}
       <IkatBorder className="opacity-40" />
     </header>
