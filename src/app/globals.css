@@ -2,9 +2,10 @@
 @import "tw-animate-css";
 
 /*
- * Tantuve design system — "saree palette".
- * Indigo base, madder crimson, turmeric gold highlight, teal support,
- * handspun-ivory background, charcoal text.
+ * Tantuve design system — three-mode theme.
+ * Aesthetic (default): full saree palette
+ * White: clean minimal light
+ * Black: true dark mode
  */
 
 @theme inline {
@@ -36,7 +37,9 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-:root {
+/* ===== AESTHETIC MODE (default — full saree palette) ===== */
+:root,
+[data-theme="aesthetic"] {
   --ivory: #F5EFE4;
   --ink: #22283c;
 
@@ -71,7 +74,151 @@
   --border: #D5CFC0;
   --input: #D5CFC0;
   --ring: #D4A017;
+
+  /* Dock */
+  --dock-bg: #1B2A4A;
+  --dock-border: rgba(212, 160, 23, 0.25);
+  --dock-item-bg: rgba(27, 42, 74, 0.6);
+  --dock-item-border: rgba(212, 160, 23, 0.15);
+  --dock-item-hover-bg: rgba(212, 160, 23, 0.15);
+  --dock-icon: #F5EFE4;
+  --dock-icon-hover: #D4A017;
+  --dock-label-bg: #1B2A4A;
+  --dock-label-text: #F5EFE4;
+
+  /* Hero */
+  --hero-gradient: linear-gradient(120deg, #162040 0%, #4A1A3D 45%, #8B1E3F 75%, #A07830 100%);
+  --hero-text: #F5EFE4;
+  --hero-text-secondary: rgba(245, 239, 228, 0.75);
+
+  /* Threads background */
+  --threads-color: 0.106, 0.165, 0.29;
+  --threads-opacity: 0.07;
+
+  /* Band */
+  --band-bg: linear-gradient(135deg, #162040, #1B2A4A);
+  --band-text: #F5EFE4;
 }
+
+/* ===== WHITE MODE ===== */
+[data-theme="white"] {
+  --background: #FAFAFA;
+  --foreground: #1A1A2E;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A2E;
+
+  --primary: #1A1A2E;
+  --primary-foreground: #FAFAFA;
+
+  --secondary: #F0F0F5;
+  --secondary-foreground: #1A1A2E;
+
+  --muted: #F0F0F5;
+  --muted-foreground: #6B7280;
+
+  --madder: #8B1E3F;
+  --madder-foreground: #FFFFFF;
+  --accent: #8B1E3F;
+  --accent-foreground: #FFFFFF;
+
+  --gold: #C4940A;
+  --gold-foreground: #1A1A2E;
+
+  --teal: #0D7B6A;
+  --teal-foreground: #FFFFFF;
+
+  --destructive: #DC3545;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #C4940A;
+
+  /* Dock */
+  --dock-bg: #FFFFFF;
+  --dock-border: #E5E7EB;
+  --dock-item-bg: #F5F5F5;
+  --dock-item-border: #E5E7EB;
+  --dock-item-hover-bg: rgba(196, 148, 10, 0.1);
+  --dock-icon: #1A1A2E;
+  --dock-icon-hover: #C4940A;
+  --dock-label-bg: #FFFFFF;
+  --dock-label-text: #1A1A2E;
+
+  /* Hero */
+  --hero-gradient: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 50%, #8B1E3F 100%);
+  --hero-text: #FFFFFF;
+  --hero-text-secondary: rgba(255, 255, 255, 0.8);
+
+  /* Threads */
+  --threads-color: 0.1, 0.1, 0.18;
+  --threads-opacity: 0.04;
+
+  /* Band */
+  --band-bg: linear-gradient(135deg, #1A1A2E, #2D2D44);
+  --band-text: #FFFFFF;
+}
+
+/* ===== BLACK MODE ===== */
+[data-theme="black"] {
+  --background: #0B0E14;
+  --foreground: #F0ECE4;
+  --card: #151921;
+  --card-foreground: #F0ECE4;
+
+  --primary: #F0ECE4;
+  --primary-foreground: #0B0E14;
+
+  --secondary: #1C2128;
+  --secondary-foreground: #F0ECE4;
+
+  --muted: #1C2128;
+  --muted-foreground: #8B929A;
+
+  --madder: #D4476B;
+  --madder-foreground: #0B0E14;
+  --accent: #D4476B;
+  --accent-foreground: #0B0E14;
+
+  --gold: #F0C840;
+  --gold-foreground: #0B0E14;
+
+  --teal: #34D399;
+  --teal-foreground: #0B0E14;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #2A2F38;
+  --input: #2A2F38;
+  --ring: #F0C840;
+
+  /* Dock */
+  --dock-bg: #151921;
+  --dock-border: rgba(240, 200, 64, 0.3);
+  --dock-item-bg: rgba(21, 25, 33, 0.8);
+  --dock-item-border: rgba(240, 200, 64, 0.15);
+  --dock-item-hover-bg: rgba(240, 200, 64, 0.12);
+  --dock-icon: #F0ECE4;
+  --dock-icon-hover: #F0C840;
+  --dock-label-bg: #1C2128;
+  --dock-label-text: #F0ECE4;
+
+  /* Hero */
+  --hero-gradient: linear-gradient(135deg, #0B0E14 0%, #1A1030 40%, #D4476B 80%, #F0C840 100%);
+  --hero-text: #F0ECE4;
+  --hero-text-secondary: rgba(240, 236, 228, 0.7);
+
+  /* Threads */
+  --threads-color: 0.94, 0.78, 0.25;
+  --threads-opacity: 0.05;
+
+  /* Band */
+  --band-bg: linear-gradient(135deg, #0F1218, #151921);
+  --band-text: #F0ECE4;
+}
+
+/* ===== BASE STYLES ===== */
 
 @layer base {
   * {
@@ -93,8 +240,8 @@
 /* ---- Signature utilities ---- */
 
 .band-dark {
-  background: linear-gradient(135deg, #162040, #1B2A4A);
-  color: #F5EFE4;
+  background: var(--band-bg);
+  color: var(--band-text);
 }
 
 .ikat-rule {
@@ -115,7 +262,7 @@
 }
 
 .hero-wash {
-  background: linear-gradient(120deg, #162040 0%, #4A1A3D 45%, #8B1E3F 75%, #A07830 100%);
+  background: var(--hero-gradient);
   background-size: 220% 220%;
   animation: tv-shimmer 16s ease-in-out infinite;
 }
