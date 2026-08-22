@@ -306,3 +306,29 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---- Custom cursor: hide system cursor on desktop ---- */
+@media (hover: hover) and (pointer: fine) {
+  html { cursor: none !important; }
+  html a, html button, html [role="button"], html input, html textarea, html select {
+    cursor: none !important;
+  }
+}
+
+/* ---- Idle pulse for QR icon ---- */
+@keyframes tv-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+.animate-idle-pulse {
+  animation: tv-pulse 2.5s ease-in-out infinite;
+}
+
+/* ---- Stat hover lift ---- */
+.stat-hover {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+.stat-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(212, 160, 23, 0.15);
+}
