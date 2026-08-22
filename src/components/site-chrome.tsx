@@ -180,10 +180,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       className={cn(
         "sticky top-0 z-50 w-full border-b backdrop-blur",
         transparent
-          ? "border-gold/20 bg-primary/90 shadow-lg"
+          ? "border-gold/20 bg-[#1B2A4A] shadow-lg"
           : "border-border bg-background/90",
       )}
-      style={transparent ? { color: "var(--band-text)" } : undefined}
+      style={transparent ? { color: "var(--band-text)", backgroundColor: "var(--primary)" } : undefined}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Logo */}
