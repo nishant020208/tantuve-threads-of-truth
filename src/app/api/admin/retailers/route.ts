@@ -13,6 +13,10 @@ export async function GET(req: NextRequest) {
   if (status) query = query.eq("request_status", status);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+  if (error) {
+    // request_status column might not exist — return all
+    const { data: fallback } = await client.from("retailers").select("*").order("created_at", { ascending: false });
+    return NextResponse.json(fallback || []);
+  }
   return NextResponse.json(data || []);
 }

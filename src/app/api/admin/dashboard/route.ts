@@ -8,20 +8,25 @@ export async function GET(req: NextRequest) {
 
   const client = getServerClient();
 
-  const [products, weavers, retailers, entries] = await Promise.all([
-    client.from("products").select("id, status", { count: "exact" }),
-    client.from("weavers").select("id, status", { count: "exact" }),
-    client.from("retailers").select("id, request_status", { count: "exact" }),
-    client.from("ledger_entries").select("id", { count: "exact" }),
+  const [products, weavers, retailers] = await Promise.all([
+    client.from("products").select("id, status"),
+    client.from("weavers").select("id, status"),
+    client.from("retailers").select("id, request_status"),
   ]);
 
-  const totalProducts = products.count || 0;
+  const totalProducts = products.count || products.data?.length || 0;
   const completedProducts = (products.data || []).filter((p) => p.status === "completed").length;
-  const totalWeavers = weavers.count || 0;
+  const totalWeavers = weavers.count || weavers.data?.length || 0;
   const pendingWeavers = (weavers.data || []).filter((w) => w.status === "pending").length;
-  const totalRetailers = retailers.count || 0;
+  const totalRetailers = retailers.count || retailers.data?.length || 0;
   const pendingRetailers = (retailers.data || []).filter((r) => r.request_status === "pending").length;
-  const totalEntries = entries.count || 0;
+
+  // Try to count entries — handle missing table gracefully
+  let totalEntries = 0;
+  try {
+    const entries = await client.from("ledger_entries").select("id");
+    totalEntries = entries.data?.length || 0;
+  } catch { /* table might not exist */ }
 
   return NextResponse.json({
     totalProducts,
