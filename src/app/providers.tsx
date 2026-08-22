@@ -5,7 +5,6 @@ import { useState } from "react";
 import { SessionProvider } from "@/lib/session";
 import { ThemeProvider } from "@/lib/theme";
 import { ErrorBoundary } from "@/components/error-boundary";
-import DockNav from "@/components/dock-nav";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -17,12 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <SessionProvider>
-            <div className="pb-24 md:pb-0">
-              {children}
-            </div>
-            <div className="md:hidden">
-              <DockNav />
-            </div>
+            {children}
           </SessionProvider>
         </ThemeProvider>
       </QueryClientProvider>
