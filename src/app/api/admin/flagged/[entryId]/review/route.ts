@@ -14,13 +14,16 @@ export async function POST(
   const body = await req.json();
 
   if (body.action === "reviewed") {
-    const { error } = await client
-      .from("ledger_entries")
-      .update({ flagged_plausibility: false, flagged_reason: null })
-      .eq("id", entryId);
-    if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+    try {
+      const { error } = await client
+        .from("ledger_entries")
+        .update({ flagged_plausibility: false, flagged_reason: null })
+        .eq("id", entryId);
+      if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+    } catch {
+      return NextResponse.json({ detail: "Flagging columns not yet added to database" }, { status: 500 });
+    }
   } else if (body.action === "escalate") {
-    // Create a dispute from the flagged entry
     const { data: entry } = await client
       .from("ledger_entries")
       .select("product_id")

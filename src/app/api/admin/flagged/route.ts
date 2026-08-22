@@ -7,12 +7,17 @@ export async function GET(req: NextRequest) {
   if (user instanceof NextResponse) return user;
 
   const client = getServerClient();
-  const { data, error } = await client
-    .from("ledger_entries")
-    .select("*, products(title, craft_type)")
-    .eq("flagged_plausibility", true)
-    .order("created_at", { ascending: false });
 
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
-  return NextResponse.json(data || []);
+  try {
+    const { data, error } = await client
+      .from("ledger_entries")
+      .select("*")
+      .eq("flagged_plausibility", true)
+      .order("timestamp", { ascending: false });
+
+    if (error) return NextResponse.json([]);
+    return NextResponse.json(data || []);
+  } catch {
+    return NextResponse.json([]);
+  }
 }
