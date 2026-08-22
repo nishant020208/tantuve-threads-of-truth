@@ -87,15 +87,18 @@ const MaskedHeading = ({
     const measure = measureRef.current;
     if (!root || !measure) return;
     const s = settingsRef.current;
-    root.style.fontSize = `${clamp(root.clientWidth * Number(s.textScale), 20, 200).toFixed(1)}px`;
-    const cs = window.getComputedStyle(measure);
+    // Use parent container width to prevent blowout on unconstrained headings
+    const containerWidth = root.parentElement?.clientWidth ?? root.clientWidth;
+    root.style.fontSize = `${clamp(containerWidth * Number(s.textScale), 20, 200).toFixed(1)}px`;
+    const rootRect = root.getBoundingClientRect();
+    const cs = window.getComputedStyle(root);
     for (let i = 0; i < wordRefs.current.length; i += 1) {
       const box = wordRefs.current[i];
-      const base = baseRefs.current[i];
       const glyph = glyphRefs.current[i];
-      if (!box || !base || !glyph) continue;
-      glyph.setAttribute("x", `${box.offsetLeft}`);
-      glyph.setAttribute("y", `${base.offsetTop}`);
+      if (!box || !glyph) continue;
+      const boxRect = box.getBoundingClientRect();
+      glyph.setAttribute("x", `${(boxRect.left - rootRect.left).toFixed(2)}`);
+      glyph.setAttribute("y", `${(boxRect.top - rootRect.top + boxRect.height * 0.82).toFixed(2)}`);
       glyph.style.fontFamily = cs.fontFamily;
       glyph.style.fontSize = cs.fontSize;
       glyph.style.fontWeight = cs.fontWeight;
@@ -108,12 +111,15 @@ const MaskedHeading = ({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    sync();
-    const ro = new ResizeObserver(sync);
+    // Defer initial sync to ensure layout is settled
+    const initialRaf = requestAnimationFrame(() => {
+      sync();
+    });
+    const ro = new ResizeObserver(() => sync());
     ro.observe(root);
     if (document.fonts?.ready) document.fonts.ready.then(sync).catch(() => {});
 
-    let raf = 0;
+    let animRaf = 0;
     let last = performance.now();
     let clock = 0;
 
@@ -129,7 +135,7 @@ const MaskedHeading = ({
       off.x += (off.tx + dx - off.x) * ease;
       off.y += (off.ty + dy - off.y) * ease;
       place();
-      raf = requestAnimationFrame(frame);
+      animRaf = requestAnimationFrame(frame);
     };
 
     const onMove = (e: PointerEvent) => {
@@ -149,10 +155,11 @@ const MaskedHeading = ({
 
     root.addEventListener("pointermove", onMove);
     root.addEventListener("pointerleave", onLeave);
-    raf = requestAnimationFrame(frame);
+    animRaf = requestAnimationFrame(frame);
 
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(initialRaf);
+      cancelAnimationFrame(animRaf);
       ro.disconnect();
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerleave", onLeave);
