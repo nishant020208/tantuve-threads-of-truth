@@ -17,7 +17,6 @@ import { publicApi } from "@/lib/api";
 const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
 
 // Rich saree texture image for the text mask — warm, detailed weave visible
-const HERO_MEDIA = "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80";
 
 export default function Index() {
   const { lang } = useSession();
@@ -57,27 +56,22 @@ export default function Index() {
               {getString(lang, "hero_eyebrow")}
             </p>
 
-            {/* Hero headline — saree texture fills the key phrase */}
-            <div className="mt-5 space-y-1">
+            {/* Hero headline — solid colors with 3D depth */}
+            <div className="mt-5">
               <h1 className="font-display font-bold leading-[1.08] tracking-tight">
                 <span
                   className="block text-[clamp(2.5rem,6vw,5rem)]"
-                  style={{
-                    backgroundImage: `url(${HERO_MEDIA})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center 30%",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    filter: "brightness(1.15) saturate(1.3)",
-                  }}
+                  style={{ color: "var(--band-text)" }}
                 >
-                  Every genuine thread
+                  {getString(lang, "hero_title_1")}
                 </span>
                 <span
                   className="block text-[clamp(2.5rem,6vw,5rem)] text-gold"
+                  style={{
+                    textShadow: "2px 3px 0 rgba(0,0,0,0.35), 0 0 60px rgba(212,160,23,0.2)",
+                  }}
                 >
-                  has a story worth proving.
+                  {getString(lang, "hero_title_2")}
                 </span>
               </h1>
             </div>

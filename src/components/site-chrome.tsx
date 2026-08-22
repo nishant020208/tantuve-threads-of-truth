@@ -180,7 +180,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       className={cn(
         "sticky top-0 z-50 w-full border-b backdrop-blur",
         transparent
-          ? "border-gold/20 bg-primary/70"
+          ? "border-gold/20 bg-primary/90 shadow-lg"
           : "border-border bg-background/90",
       )}
       style={transparent ? { color: "var(--band-text)" } : undefined}
