@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, QrCode, Landmark, Store, ScrollText } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
@@ -12,6 +13,9 @@ import { GlowButton } from "@/components/glow-button";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
+
+import dynamic from "next/dynamic";
+const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
 
 export default function Index() {
   const { lang } = useSession();
@@ -110,26 +114,33 @@ export default function Index() {
 
       <ThreadDivider className="my-0" />
 
-      {/* How it works */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-        <ScrollReveal>
-          <h2 className="font-display text-3xl text-primary">How a thread becomes proof</h2>
-        </ScrollReveal>
-        <div className="mt-10 grid gap-6 md:grid-cols-4">
-          {[
-            { icon: ScrollText, title: "Weaver logs the craft", body: "Yarn sourcing, dyeing, weaving and finishing are each written to the product ledger." },
-            { icon: ShieldCheck, title: "Hash chain is sealed", body: "Every entry is SHA-256 hashed with the previous hash — edit one and the whole chain breaks." },
-            { icon: QrCode, title: "QR tag is issued", body: "The textile ships with a scannable tag linking to its public authenticity report, anchored on IPFS." },
-            { icon: Landmark, title: "GI authority oversees", body: "Registered crafts, weaver approvals and counterfeit disputes are handled by the authority." },
-          ].map((c, i) => (
-            <ScrollReveal key={c.title} delay={i * 100}>
-              <div className="rounded-md border border-border bg-card p-6 h-full">
-                <c.icon className="h-6 w-6 text-madder" />
-                <h3 className="mt-4 font-display text-lg text-primary">{c.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{c.body}</p>
-              </div>
-            </ScrollReveal>
-          ))}
+      {/* How it works — ivory section with Threads background */}
+      <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 overflow-hidden">
+        <ThreadsBackground
+          color={[0.106, 0.165, 0.29]} // deep indigo #1B2A4A
+          amplitude={0.8}
+          distance={0}
+        />
+        <div className="relative z-10">
+          <ScrollReveal>
+            <h2 className="font-display text-3xl text-primary">How a thread becomes proof</h2>
+          </ScrollReveal>
+          <div className="mt-10 grid gap-6 md:grid-cols-4">
+            {[
+              { icon: ScrollText, title: "Weaver logs the craft", body: "Yarn sourcing, dyeing, weaving and finishing are each written to the product ledger." },
+              { icon: ShieldCheck, title: "Hash chain is sealed", body: "Every entry is SHA-256 hashed with the previous hash — edit one and the whole chain breaks." },
+              { icon: QrCode, title: "QR tag is issued", body: "The textile ships with a scannable tag linking to its public authenticity report, anchored on IPFS." },
+              { icon: Landmark, title: "GI authority oversees", body: "Registered crafts, weaver approvals and counterfeit disputes are handled by the authority." },
+            ].map((c, i) => (
+              <ScrollReveal key={c.title} delay={i * 100}>
+                <div className="rounded-md border border-border bg-card p-6 h-full">
+                  <c.icon className="h-6 w-6 text-madder" />
+                  <h3 className="mt-4 font-display text-lg text-primary">{c.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{c.body}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
