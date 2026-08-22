@@ -11,6 +11,7 @@ import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { useTheme } from "@/lib/theme";
 import { publicApi } from "@/lib/api";
 
 const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
@@ -43,6 +44,7 @@ export default function Index() {
     },
   });
 
+  const { theme } = useTheme();
   const heroTitle = `${getString(lang, "hero_title_1")} ${getString(lang, "hero_title_2")}`;
 
   return (
@@ -135,7 +137,7 @@ export default function Index() {
       {/* How it works — ivory section with Threads background */}
       <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 overflow-hidden">
         <ThreadsBackground
-          color={[0.106, 0.165, 0.29]}
+          color={theme === "black" ? [0.94, 0.78, 0.25] : theme === "white" ? [0.1, 0.1, 0.18] : [0.106, 0.165, 0.29]}
           amplitude={0.8}
           distance={0}
         />
