@@ -8,6 +8,10 @@ import { ThreadDivider } from "@/components/thread-divider";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
+import { CustomCursor } from "@/components/custom-cursor";
+import { HeroSpotlight } from "@/components/hero-spotlight";
+import { MagneticWrapper } from "@/components/magnetic-wrapper";
+import { ProximityGlow, IdlePulse } from "@/components/proximity-glow";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
@@ -41,11 +45,13 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
+      <CustomCursor />
       <SiteHeader transparent />
 
       {/* Hero */}
       <section className="relative overflow-hidden band-dark">
         <div className="hero-wash absolute inset-0" />
+        <HeroSpotlight />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:py-32">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gold animate-rise">
@@ -75,7 +81,8 @@ export default function Index() {
             <p className="mt-6 max-w-xl animate-rise" style={{ animationDelay: "0.8s", color: "color-mix(in oklab, var(--band-text) 75%, transparent)" }}>
               {getString(lang, "hero_sub")}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3 animate-rise" style={{ animationDelay: "1s" }}>
+            <MagneticWrapper className="mt-8 inline-block animate-rise" style={{ animationDelay: "1s" }}>
+            <div className="flex flex-wrap gap-3">
               {stats?.sampleId && (
                 <GlowButton asChild variant="outlineLight" size="lg">
                   <Link href={`/verify/${stats.sampleId}`}>
@@ -88,20 +95,21 @@ export default function Index() {
                 <Link href="/explore">{getString(lang, "hero_cta2")}</Link>
               </GlowButton>
             </div>
+            </MagneticWrapper>
             <div className="mt-12 grid max-w-md grid-cols-3 gap-6 animate-rise" style={{ animationDelay: "1.2s" }}>
-              <div>
+              <div className="stat-hover rounded-md p-2">
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.products ?? 0} />
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Textiles</p>
               </div>
-              <div>
+              <div className="stat-hover rounded-md p-2">
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.weavers ?? 0} />
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Weavers</p>
               </div>
-              <div>
+              <div className="stat-hover rounded-md p-2">
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.scans ?? 0} />
                 </p>
@@ -110,13 +118,13 @@ export default function Index() {
             </div>
           </div>
           <div className="relative hidden lg:block">
-            <div className="ikat-frame overflow-hidden rounded-md bg-primary/20 flex items-center justify-center h-96">
+            <ProximityGlow className="ikat-frame overflow-hidden rounded-md bg-primary/20 flex items-center justify-center h-96 transition-all duration-500">
               <div className="text-center" style={{ color: "color-mix(in oklab, var(--band-text) 40%, transparent)" }}>
-                <QrCode className="h-20 w-20 mx-auto mb-4" />
+                <IdlePulse><QrCode className="h-20 w-20 mx-auto mb-4 animate-idle-pulse" /></IdlePulse>
                 <p className="font-display text-lg">Scan to verify</p>
                 <p className="text-sm mt-1">Every textile tells its story</p>
               </div>
-            </div>
+            </ProximityGlow>
           </div>
         </div>
       </section>
