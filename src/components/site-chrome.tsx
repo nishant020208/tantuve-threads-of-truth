@@ -264,10 +264,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm lg:hidden"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-72 border-l border-border bg-background p-6 shadow-xl lg:hidden">
+          <div className="fixed inset-y-0 right-0 z-[70] w-72 border-l border-border bg-background p-6 shadow-2xl lg:hidden" style={{ backgroundColor: "var(--background)" }}>
             <div className="flex items-center justify-between mb-6">
               <Logo />
               <button
