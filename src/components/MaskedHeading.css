@@ -1,17 +1,23 @@
 .masked-heading {
   position: relative;
+  display: block;
   width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   text-wrap: balance;
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
 }
 .masked-heading__measure {
+  position: relative;
+  display: block;
   color: transparent;
+  visibility: hidden;
 }
 .masked-heading__word {
   display: inline-block;
-  white-space: pre;
+  white-space: normal;
 }
 .masked-heading__word:not(:last-child)::after {
   content: ' ';
@@ -26,6 +32,10 @@
   width: 0;
   height: 0;
   overflow: hidden;
+}
+.masked-heading__defs text {
+  fill: white;
+  font-family: inherit;
 }
 .masked-heading__reveal {
   position: absolute;
