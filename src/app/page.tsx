@@ -83,7 +83,7 @@ export default function Index() {
               />
             </div>
 
-            <p className="mt-6 max-w-xl text-primary-foreground/75 animate-rise" style={{ animationDelay: "0.8s" }}>
+            <p className="mt-6 max-w-xl animate-rise" style={{ animationDelay: "0.8s", color: "color-mix(in oklab, var(--band-text) 75%, transparent)" }}>
               {getString(lang, "hero_sub")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3 animate-rise" style={{ animationDelay: "1s" }}>
@@ -104,25 +104,25 @@ export default function Index() {
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.products ?? 0} />
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-widest text-primary-foreground/60">Textiles</p>
+                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Textiles</p>
               </div>
               <div>
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.weavers ?? 0} />
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-widest text-primary-foreground/60">Weavers</p>
+                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Weavers</p>
               </div>
               <div>
                 <p className="font-display text-3xl text-gold">
                   <AnimatedCounter value={stats?.scans ?? 0} />
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-widest text-primary-foreground/60">Verifications</p>
+                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Verifications</p>
               </div>
             </div>
           </div>
           <div className="relative hidden lg:block">
             <div className="ikat-frame overflow-hidden rounded-md bg-primary/20 flex items-center justify-center h-96">
-              <div className="text-center text-primary-foreground/40">
+              <div className="text-center" style={{ color: "color-mix(in oklab, var(--band-text) 40%, transparent)" }}>
                 <QrCode className="h-20 w-20 mx-auto mb-4" />
                 <p className="font-display text-lg">Scan to verify</p>
                 <p className="text-sm mt-1">Every textile tells its story</p>
@@ -177,8 +177,8 @@ export default function Index() {
             <ScrollReveal key={r.role} delay={i * 100}>
               <div className="rounded-md border border-gold/25 p-6 h-full">
                 <r.icon className="h-6 w-6 text-gold" />
-                <h3 className="mt-4 font-display text-xl text-primary-foreground">{r.role}</h3>
-                <p className="mt-2 text-sm text-primary-foreground/70">{r.copy}</p>
+                <h3 className="mt-4 font-display text-xl" style={{ color: "var(--band-text)" }}>{r.role}</h3>
+                <p className="mt-2 text-sm" style={{ color: "color-mix(in oklab, var(--band-text) 70%, transparent)" }}>{r.copy}</p>
                 <Link href={r.href} className="mt-4 inline-block text-sm text-gold hover:underline">
                   {r.cta} →
                 </Link>
