@@ -15,7 +15,6 @@ import { useTheme } from "@/lib/theme";
 import { publicApi } from "@/lib/api";
 
 const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
-const MaskedHeading = dynamic(() => import("@/components/MaskedHeading"), { ssr: false });
 
 // Rich saree texture image for the text mask — warm, detailed weave visible
 const HERO_MEDIA = "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80";
@@ -45,8 +44,6 @@ export default function Index() {
   });
 
   const { theme } = useTheme();
-  const heroTitle = `${getString(lang, "hero_title_1")} ${getString(lang, "hero_title_2")}`;
-
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader transparent />
@@ -60,21 +57,29 @@ export default function Index() {
               {getString(lang, "hero_eyebrow")}
             </p>
 
-            {/* MaskedHeading — saree texture shows through the letters */}
-            <div className="mt-5">
-              <MaskedHeading
-                text={heroTitle}
-                tag="h1"
-                mediaType="image"
-                src={HERO_MEDIA}
-                reveal="rise"
-                trigger="view"
-                lineHeight={1.15}
-                weight={700}
-                tracking={-0.02}
-                brightness={1.1}
-                saturation={1.2}
-              />
+            {/* Hero headline — saree texture fills the key phrase */}
+            <div className="mt-5 space-y-1">
+              <h1 className="font-display font-bold leading-[1.08] tracking-tight">
+                <span
+                  className="block text-[clamp(2.5rem,6vw,5rem)]"
+                  style={{
+                    backgroundImage: `url(${HERO_MEDIA})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center 30%",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    filter: "brightness(1.15) saturate(1.3)",
+                  }}
+                >
+                  Every genuine thread
+                </span>
+                <span
+                  className="block text-[clamp(2.5rem,6vw,5rem)] text-gold"
+                >
+                  has a story worth proving.
+                </span>
+              </h1>
             </div>
 
             <p className="mt-6 max-w-xl animate-rise" style={{ animationDelay: "0.8s", color: "color-mix(in oklab, var(--band-text) 75%, transparent)" }}>
