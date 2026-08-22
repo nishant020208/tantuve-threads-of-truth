@@ -61,7 +61,7 @@ export default function Index() {
             </p>
 
             {/* MaskedHeading — saree texture shows through the letters */}
-            <div className="mt-5" style={{ minHeight: "4.5em" }}>
+            <div className="mt-5">
               <MaskedHeading
                 text={heroTitle}
                 tag="h1"
@@ -69,17 +69,11 @@ export default function Index() {
                 src={HERO_MEDIA}
                 reveal="rise"
                 trigger="view"
-                lineHeight={1.2}
+                lineHeight={1.15}
                 weight={700}
                 tracking={-0.02}
-                textScale={0.09}
                 brightness={1.1}
                 saturation={1.2}
-                fillScale={1.3}
-                parallax={12}
-                drift={8}
-                className="text-primary-foreground"
-                style={{ color: "transparent" }}
               />
             </div>
 
