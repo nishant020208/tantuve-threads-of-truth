@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, QrCode, Landmark, Store, ScrollText } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { ThreadDivider } from "@/components/thread-divider";
-import { AnimatedText } from "@/components/animated-text";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
@@ -14,8 +13,11 @@ import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
 
-import dynamic from "next/dynamic";
 const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
+const MaskedHeading = dynamic(() => import("@/components/MaskedHeading"), { ssr: false });
+
+// Rich saree texture image for the text mask — warm, detailed weave visible
+const HERO_MEDIA = "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80";
 
 export default function Index() {
   const { lang } = useSession();
@@ -41,6 +43,8 @@ export default function Index() {
     },
   });
 
+  const heroTitle = `${getString(lang, "hero_title_1")} ${getString(lang, "hero_title_2")}`;
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader transparent />
@@ -53,16 +57,30 @@ export default function Index() {
             <p className="text-xs uppercase tracking-[0.35em] text-gold animate-rise">
               {getString(lang, "hero_eyebrow")}
             </p>
-            <AnimatedText
-              text={getString(lang, "hero_title_1")}
-              className="mt-5 text-5xl leading-[1.05] text-primary-foreground sm:text-6xl"
-              delay={200}
-            />
-            <AnimatedText
-              text={getString(lang, "hero_title_2")}
-              className="mt-2 text-5xl leading-[1.05] text-gold sm:text-6xl"
-              delay={600}
-            />
+
+            {/* MaskedHeading — saree texture shows through the letters */}
+            <div className="mt-5" style={{ minHeight: "4.5em" }}>
+              <MaskedHeading
+                text={heroTitle}
+                tag="h1"
+                mediaType="image"
+                src={HERO_MEDIA}
+                reveal="rise"
+                trigger="view"
+                lineHeight={1.2}
+                weight={700}
+                tracking={-0.02}
+                textScale={0.09}
+                brightness={1.1}
+                saturation={1.2}
+                fillScale={1.3}
+                parallax={12}
+                drift={8}
+                className="text-primary-foreground"
+                style={{ color: "transparent" }}
+              />
+            </div>
+
             <p className="mt-6 max-w-xl text-primary-foreground/75 animate-rise" style={{ animationDelay: "0.8s" }}>
               {getString(lang, "hero_sub")}
             </p>
@@ -117,7 +135,7 @@ export default function Index() {
       {/* How it works — ivory section with Threads background */}
       <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 overflow-hidden">
         <ThreadsBackground
-          color={[0.106, 0.165, 0.29]} // deep indigo #1B2A4A
+          color={[0.106, 0.165, 0.29]}
           amplitude={0.8}
           distance={0}
         />
