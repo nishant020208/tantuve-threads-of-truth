@@ -17,10 +17,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <SessionProvider>
-            <div className="pb-24">
+            <div className="pb-24 md:pb-0">
               {children}
             </div>
-            <DockNav />
+            <div className="md:hidden">
+              <DockNav />
+            </div>
           </SessionProvider>
         </ThemeProvider>
       </QueryClientProvider>
