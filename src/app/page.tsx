@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, QrCode, Landmark, Store, ScrollText } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
@@ -11,10 +10,8 @@ import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
-import { useTheme } from "@/lib/theme";
 import { publicApi } from "@/lib/api";
 
-const ThreadsBackground = dynamic(() => import("@/components/threads-background"), { ssr: false });
 
 // Rich saree texture image for the text mask — warm, detailed weave visible
 
@@ -42,7 +39,6 @@ export default function Index() {
     },
   });
 
-  const { theme } = useTheme();
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader transparent />
@@ -129,11 +125,6 @@ export default function Index() {
 
       {/* How it works — ivory section with Threads background */}
       <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 overflow-hidden">
-        <ThreadsBackground
-          color={theme === "black" ? [0.94, 0.78, 0.25] : theme === "white" ? [0.1, 0.1, 0.18] : [0.106, 0.165, 0.29]}
-          amplitude={0.8}
-          distance={0}
-        />
         <div className="relative z-10">
           <ScrollReveal>
             <h2 className="font-display text-3xl text-primary">How a thread becomes proof</h2>
