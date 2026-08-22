@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SessionProvider } from "@/lib/session";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -17,10 +14,25 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.svg" },
 };
 
+// Inline script to apply theme before first paint (prevents flash)
+const themeScript = `
+(function() {
+  try {
+    var t = localStorage.getItem('tantuve-theme');
+    if (t === 'white' || t === 'black' || t === 'aesthetic') {
+      document.documentElement.setAttribute('data-theme', t);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'aesthetic');
+    }
+  } catch(e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -31,7 +43,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background font-sans text-foreground">
         <Providers>
           {children}
-          <Toaster />
         </Providers>
       </body>
     </html>
