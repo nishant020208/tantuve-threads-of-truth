@@ -8,7 +8,6 @@ import { ThreadDivider } from "@/components/thread-divider";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
-import { CustomCursor } from "@/components/custom-cursor";
 import { HeroSpotlight } from "@/components/hero-spotlight";
 import { MagneticWrapper } from "@/components/magnetic-wrapper";
 import { ProximityGlow, IdlePulse } from "@/components/proximity-glow";
@@ -45,7 +44,6 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <CustomCursor />
       <SiteHeader transparent />
 
       {/* Hero */}
