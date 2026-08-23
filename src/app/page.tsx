@@ -11,15 +11,89 @@ import { GlowButton } from "@/components/glow-button";
 import { HeroSpotlight } from "@/components/hero-spotlight";
 import { MagneticWrapper } from "@/components/magnetic-wrapper";
 import { ProximityGlow, IdlePulse } from "@/components/proximity-glow";
+import Stack from "@/components/Stack";
+import dynamic from "next/dynamic";
+import { useQrDataUrl, verifyUrl } from "@/components/qr-panel";
+import { useMemo } from "react";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
 
+const ShapeBlur = dynamic(() => import("@/components/ShapeBlur"), { ssr: false });
+
 
 // Rich saree texture image for the text mask — warm, detailed weave visible
 
+
+/** Individual QR card used in the Stack */
+function QrCard({ productId }: { productId: string }) {
+  const url = verifyUrl(productId);
+  const dataUrl = useQrDataUrl(url, 220);
+  return (
+    <div className="ikat-frame rounded-2xl bg-[#f7f2e6] p-4 shadow-lg flex flex-col items-center gap-2" style={{ width: 240, height: 320 }}>
+      {dataUrl ? (
+        <img src={dataUrl} alt={`QR code for product ${productId}`} width={220} height={220} className="rounded-md" />
+      ) : (
+        <div style={{ width: 220, height: 220 }} className="animate-pulse bg-muted rounded-md" />
+      )}
+      <p className="font-mono text-xs tracking-wider text-muted-foreground truncate max-w-full">{productId}</p>
+      <a href={`/verify/${productId}`} className="text-xs text-madder hover:underline">View report</a>
+    </div>
+  );
+}
+
+/** QR Stack populated with real generated QR codes from completed products */
+function QrStack({ products }: { products: any[] }) {
+  if (products.length === 0) {
+    // Empty state — show single demo QR
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center" style={{ color: "color-mix(in oklab, var(--band-text) 40%, transparent)" }}>
+          <QrCode className="h-20 w-20 mx-auto mb-4 animate-idle-pulse" />
+          <p className="font-display text-lg">Scan to verify</p>
+          <p className="text-sm mt-1">Every textile tells its story</p>
+        </div>
+      </div>
+    );
+  }
+
+  const cards = products.map((p) => (
+    <QrCard key={p.id} productId={p.id} />
+  ));
+
+  return (
+    <div className="h-full w-full flex items-center justify-center">
+      <div style={{ width: 280, height: 360 }}>
+        <Stack
+          cards={cards}
+          randomRotation={true}
+          sendToBackOnClick={true}
+          mobileClickOnly={true}
+          mobileBreakpoint={768}
+          autoplay={true}
+          autoplayDelay={4000}
+          pauseOnHover={true}
+          animationConfig={{ stiffness: 260, damping: 20 }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function Index() {
   const { lang } = useSession();
+
+  const { data: completedProducts } = useQuery({
+    queryKey: ["home-qr-stack"],
+    queryFn: async () => {
+      try {
+        const products = await publicApi.explore();
+        return products.filter((p: any) => p.status === "completed").slice(0, 8);
+      } catch {
+        return [];
+      }
+    },
+  });
 
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
@@ -115,14 +189,25 @@ export default function Index() {
               </div>
             </div>
           </div>
-          <div className="relative hidden lg:block">
-            <ProximityGlow className="ikat-frame overflow-hidden rounded-md bg-primary/20 flex items-center justify-center h-96 transition-all duration-500">
-              <div className="text-center" style={{ color: "color-mix(in oklab, var(--band-text) 40%, transparent)" }}>
-                <IdlePulse><QrCode className="h-20 w-20 mx-auto mb-4 animate-idle-pulse" /></IdlePulse>
-                <p className="font-display text-lg">Scan to verify</p>
-                <p className="text-sm mt-1">Every textile tells its story</p>
+          <div className="relative lg:block mt-8 lg:mt-0">
+            <div className="relative h-96 w-full max-w-sm mx-auto lg:mx-0">
+              {/* ShapeBlur WebGL accent behind the stack */}
+              <div className="absolute inset-0 -m-8 overflow-hidden opacity-40" style={{ pointerEvents: "none" }}>
+                <ShapeBlur
+                  variation={2}
+                  shapeSize={1.0}
+                  roundness={0.5}
+                  borderSize={0.03}
+                  circleSize={0.4}
+                  circleEdge={0.6}
+                  pixelRatioProp={1}
+                />
               </div>
-            </ProximityGlow>
+              {/* Real QR Stack */}
+              <div className="relative z-10 h-full" style={{ pointerEvents: "auto" }}>
+                <QrStack products={completedProducts ?? []} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
