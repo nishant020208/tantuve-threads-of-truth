@@ -5,9 +5,8 @@ import { useTheme, type ThemeMode } from "@/lib/theme";
 
 /**
  * Custom themed cursor — replaces default system cursor on desktop.
- * Theme-aware: gold dot for Aesthetic, indigo for White, bright gold/crimson for Black.
- * Disables on touch devices and respects prefers-reduced-motion.
- * Hides over text inputs and form fields.
+ * Theme-aware colors. Disables on touch devices and respects
+ * prefers-reduced-motion. Hides over text inputs/form fields.
  */
 
 const TRAIL_LENGTH = 8;
@@ -22,26 +21,27 @@ function getThemeColors(theme: ThemeMode) {
     case "aesthetic":
       return {
         dot: "#D4A017",
-        dotGlow: "rgba(212, 160, 23, 0.4)",
-        trail: "rgba(212, 160, 23, 0.25)",
-        size: 10,
-        glowRadius: 20,
+        dotGlow: "rgba(212, 160, 23, 0.45)",
+        trail: "rgba(212, 160, 23, 0.3)",
+        size: 12,
+        glowRadius: 22,
       };
     case "white":
       return {
-        dot: "#1B2A4A",
-        dotGlow: "rgba(27, 42, 74, 0.25)",
-        trail: "rgba(27, 42, 74, 0.15)",
-        size: 8,
-        glowRadius: 14,
+        dot: "#FAFAF0",
+        dotGlow: "rgba(139, 30, 63, 0.5)",
+        trail: "rgba(139, 30, 63, 0.35)",
+        ring: "#8B1E3F",
+        size: 14,
+        glowRadius: 20,
       };
     case "black":
       return {
         dot: "#F0C840",
         dotGlow: "rgba(240, 200, 64, 0.55)",
-        trail: "rgba(240, 200, 64, 0.3)",
-        size: 12,
-        glowRadius: 28,
+        trail: "rgba(240, 200, 64, 0.35)",
+        size: 14,
+        glowRadius: 30,
       };
   }
 }
@@ -58,45 +58,58 @@ export function CustomCursor() {
   );
   const raf = useRef(0);
   const [visible, setVisible] = useState(false);
+  const [isTouch, setIsTouch] = useState(true); // start hidden
 
-  // Detect capabilities
-  const [isTouch, setReducedMotion] = useState(true); // start hidden
+  // Detect capabilities once
   useEffect(() => {
     const hasHover = window.matchMedia("(hover: hover)").matches;
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    setReducedMotion(!hasHover || prefersReduced);
+    setIsTouch(!hasHover || prefersReduced);
   }, []);
 
+  // Store theme colors in a ref so animate() always reads latest
+  const colorsRef = useRef(getThemeColors(theme));
+  useEffect(() => {
+    colorsRef.current = getThemeColors(theme);
+  }, [theme]);
+
   const animate = useCallback(() => {
-    // Lerp main dot
-    pos.current.x += (target.current.x - pos.current.x) * 0.15;
-    pos.current.y += (target.current.y - pos.current.y) * 0.15;
+    const c = colorsRef.current;
+
+    // Lerp main dot toward target
+    pos.current.x += (target.current.x - pos.current.x) * 0.35;
+    pos.current.y += (target.current.y - pos.current.y) * 0.35;
 
     // Trail follows with increasing lag
     for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
-      trail.current[i].x += (trail.current[i - 1].x - trail.current[i].x) * 0.25;
-      trail.current[i].y += (trail.current[i - 1].y - trail.current[i].y) * 0.25;
+      trail.current[i].x +=
+        (trail.current[i - 1].x - trail.current[i].x) * 0.25;
+      trail.current[i].y +=
+        (trail.current[i - 1].y - trail.current[i].y) * 0.25;
     }
-    trail.current[0].x += (pos.current.x - trail.current[0].x) * 0.3;
-    trail.current[0].y += (pos.current.y - trail.current[0].y) * 0.3;
+    trail.current[0].x += (pos.current.x - trail.current[0].x) * 0.45;
+    trail.current[0].y += (pos.current.y - trail.current[0].y) * 0.45;
 
-    // Update DOM
+    // Update DOM — center each element exactly on cursor position
     const { x, y } = pos.current;
+    const halfDot = c.size / 2;
+    const halfGlow = c.glowRadius;
+
     if (dotRef.current) {
-      dotRef.current.style.transform = `translate(${x - 5}px, ${y - 5}px)`;
+      dotRef.current.style.transform = `translate(${x - halfDot}px, ${y - halfDot}px)`;
     }
     if (glowRef.current) {
-      glowRef.current.style.transform = `translate(${x - 14}px, ${y - 14}px)`;
+      glowRef.current.style.transform = `translate(${x - halfGlow}px, ${y - halfGlow}px)`;
     }
     for (let i = 0; i < TRAIL_LENGTH; i++) {
       const el = trailRefs.current[i];
       if (el) {
-        const size = Math.max(2, 6 - i * 0.6);
-        el.style.transform = `translate(${trail.current[i].x - size / 2}px, ${trail.current[i].y - size / 2}px)`;
-        el.style.width = `${size}px`;
-        el.style.height = `${size}px`;
+        const sz = Math.max(3, 7 - i * 0.7);
+        el.style.transform = `translate(${trail.current[i].x - sz / 2}px, ${trail.current[i].y - sz / 2}px)`;
+        el.style.width = `${sz}px`;
+        el.style.height = `${sz}px`;
       }
     }
 
@@ -117,29 +130,21 @@ export function CustomCursor() {
       target.current = { x: -100, y: -100 };
     };
 
-    // Detect inputs/form fields to hide cursor
+    // Hide over inputs so native text cursor shows
     const handleOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const tag = target.tagName;
-      if (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        target.isContentEditable ||
-        target.closest("input, textarea, select, [contenteditable]")
-      ) {
-        if (dotRef.current) dotRef.current.style.opacity = "0";
-        if (glowRef.current) glowRef.current.style.opacity = "0";
-        trailRefs.current.forEach((el) => {
-          if (el) el.style.opacity = "0";
-        });
-      } else {
-        if (dotRef.current) dotRef.current.style.opacity = "1";
-        if (glowRef.current) glowRef.current.style.opacity = "1";
-        trailRefs.current.forEach((el) => {
-          if (el) el.style.opacity = "1";
-        });
-      }
+      const t = e.target as HTMLElement;
+      const isInput =
+        t.tagName === "INPUT" ||
+        t.tagName === "TEXTAREA" ||
+        t.tagName === "SELECT" ||
+        t.isContentEditable ||
+        !!t.closest("input, textarea, select, [contenteditable]");
+      const op = isInput ? "0" : "1";
+      if (dotRef.current) dotRef.current.style.opacity = op;
+      if (glowRef.current) glowRef.current.style.opacity = op;
+      trailRefs.current.forEach((el) => {
+        if (el) el.style.opacity = op;
+      });
     };
 
     document.addEventListener("mousemove", handleMove);
@@ -165,7 +170,7 @@ export function CustomCursor() {
       style={{ zIndex: 99999, mixBlendMode: "normal" }}
       aria-hidden="true"
     >
-      {/* Glow aura */}
+      {/* Glow aura — sized as diameter, positioned from center */}
       <div
         ref={glowRef}
         className="absolute rounded-full"
@@ -173,9 +178,10 @@ export function CustomCursor() {
           width: colors.glowRadius * 2,
           height: colors.glowRadius * 2,
           background: `radial-gradient(circle, ${colors.dotGlow}, transparent 70%)`,
-          opacity: visible ? 0.7 : 0,
+          opacity: visible ? 0.8 : 0,
           transition: "opacity 0.3s ease",
-          filter: "blur(4px)",
+          filter: "blur(3px)",
+          willChange: "transform",
         }}
       />
 
@@ -189,7 +195,7 @@ export function CustomCursor() {
           className="absolute rounded-full"
           style={{
             background: colors.trail,
-            opacity: visible ? 0.6 - i * 0.06 : 0,
+            opacity: visible ? 0.7 - i * 0.07 : 0,
             transition: "opacity 0.3s ease",
           }}
         />
@@ -203,9 +209,11 @@ export function CustomCursor() {
           width: colors.size,
           height: colors.size,
           background: colors.dot,
-          boxShadow: `0 0 ${colors.glowRadius}px ${colors.dotGlow}`,
+          border: (colors as any).ring ? `2px solid ${(colors as any).ring}` : "none",
+          boxShadow: `0 0 ${colors.glowRadius * 0.8}px ${colors.dotGlow}, 0 2px 8px rgba(0,0,0,0.3)`,
           opacity: visible ? 1 : 0,
           transition: "opacity 0.3s ease",
+          willChange: "transform",
         }}
       />
     </div>
