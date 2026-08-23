@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SessionProvider } from "@/lib/session";
 import { ThemeProvider } from "@/lib/theme";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { CustomCursor } from "@/components/custom-cursor";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <SessionProvider>
+            <CustomCursor />
             {children}
           </SessionProvider>
         </ThemeProvider>
