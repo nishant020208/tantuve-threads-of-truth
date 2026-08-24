@@ -35,9 +35,62 @@
   --color-teal-foreground: var(--teal-foreground);
   --font-display: "Fraunces", "Georgia", serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", "Fraunces", Georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
 }
 
 /* ===== AESTHETIC MODE (default — full saree palette) ===== */
+
+/* Passport / document palette tokens */
+.passport-bg { background-color: #F3EADD; }
+.passport-ink { color: #22283c; }
+.passport-gold { color: #B8860B; }
+.passport-maroon { color: #6B1732; }
+.passport-rule { border-color: #D5CFC0; }
+
+/* Woven warp-weft pattern */
+.woven-bg {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(184,134,11,0.06) 19px, rgba(184,134,11,0.06) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(139,30,63,0.05) 19px, rgba(139,30,63,0.05) 20px);
+}
+
+/* Stamp badge rotation keyframes */
+@keyframes stamp-slam {
+  0% { opacity: 0; transform: scale(1.8) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(0.95) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.animate-stamp { animation: stamp-slam 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Hero stagger entrance */
+@keyframes hero-stagger {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hero-qr-enter {
+  from { opacity: 0; transform: translateY(24px) rotate(-2deg); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Provenance trail thread wobble */
+@keyframes thread-draw {
+  from { stroke-dashoffset: 1200; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Card flip */
+.perspective-1000 { perspective: 1000px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+
+/* Hairline rules */
+.hairline-rule {
+  border-top: 1px solid #D5CFC0;
+  opacity: 0.6;
+}
+
 :root,
 [data-theme="aesthetic"] {
   --ivory: #F5EFE4;
@@ -230,6 +283,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+  .font-serif { font-family: var(--font-serif); }
+  .font-mono { font-family: var(--font-mono); }
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
     font-weight: 600;
