@@ -5,81 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, QrCode, Landmark, Store, ScrollText } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { ThreadDivider } from "@/components/thread-divider";
-import { AnimatedCounter } from "@/components/animated-counter";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { GlowButton } from "@/components/glow-button";
-import { HeroSpotlight } from "@/components/hero-spotlight";
 import { MagneticWrapper } from "@/components/magnetic-wrapper";
-import { ProximityGlow, IdlePulse } from "@/components/proximity-glow";
-import Stack from "@/components/Stack";
-import dynamic from "next/dynamic";
-import { useQrDataUrl, verifyUrl } from "@/components/qr-panel";
-import { useMemo } from "react";
+import { StampBadge } from "@/components/stamp-badge";
+import { ProvenanceTrail } from "@/components/provenance-trail";
+import { HeroQRStack } from "@/components/hero-qr-stack";
+import { SocialProofStrip } from "@/components/social-proof-strip";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
-
-const ShapeBlur = dynamic(() => import("@/components/ShapeBlur"), { ssr: false });
-
-
-// Rich saree texture image for the text mask — warm, detailed weave visible
-
-
-/** Individual QR card used in the Stack */
-function QrCard({ productId }: { productId: string }) {
-  const url = verifyUrl(productId);
-  const dataUrl = useQrDataUrl(url, 220);
-  return (
-    <div className="ikat-frame rounded-2xl bg-[#f7f2e6] p-4 shadow-lg flex flex-col items-center gap-2" style={{ width: 240, height: 320 }}>
-      {dataUrl ? (
-        <img src={dataUrl} alt={`QR code for product ${productId}`} width={220} height={220} className="rounded-md" />
-      ) : (
-        <div style={{ width: 220, height: 220 }} className="animate-pulse bg-muted rounded-md" />
-      )}
-      <p className="font-mono text-xs tracking-wider text-muted-foreground truncate max-w-full">{productId}</p>
-      <a href={`/verify/${productId}`} className="text-xs text-madder hover:underline">View report</a>
-    </div>
-  );
-}
-
-/** QR Stack populated with real generated QR codes from completed products */
-function QrStack({ products }: { products: any[] }) {
-  if (products.length === 0) {
-    // Empty state — show single demo QR
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center" style={{ color: "color-mix(in oklab, var(--band-text) 40%, transparent)" }}>
-          <QrCode className="h-20 w-20 mx-auto mb-4 animate-idle-pulse" />
-          <p className="font-display text-lg">Scan to verify</p>
-          <p className="text-sm mt-1">Every textile tells its story</p>
-        </div>
-      </div>
-    );
-  }
-
-  const cards = products.map((p) => (
-    <QrCard key={p.id} productId={p.id} />
-  ));
-
-  return (
-    <div className="h-full w-full flex items-center justify-center">
-      <div style={{ width: 280, height: 360 }}>
-        <Stack
-          cards={cards}
-          randomRotation={true}
-          sendToBackOnClick={true}
-          mobileClickOnly={true}
-          mobileBreakpoint={768}
-          autoplay={true}
-          autoplayDelay={4000}
-          pauseOnHover={true}
-          animationConfig={{ stiffness: 260, damping: 20 }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function Index() {
   const { lang } = useSession();
 
@@ -118,120 +53,104 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader transparent />
+      <SiteHeader transparent={false} />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden band-dark">
-        <div className="hero-wash absolute inset-0" />
-        <HeroSpotlight />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:py-32">
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-gold animate-rise">
+      {/* HERO: Provenance Passport */}
+      <section className="relative overflow-hidden woven-bg" style={{ backgroundColor: "#F3EADD" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(243,234,173,0) 0%, rgba(184,134,11,0.04) 50%, rgba(107,23,50,0.03) 100%)" }} />
+
+        <div className="absolute top-8 right-[15%] opacity-[0.12] pointer-events-none hidden lg:block" style={{ transform: "rotate(-12deg)" }}>
+          <StampBadge type="gi-certified" size={130} delay={800} />
+        </div>
+        <div className="absolute bottom-12 left-[8%] opacity-[0.10] pointer-events-none hidden lg:block" style={{ transform: "rotate(8deg)" }}>
+          <StampBadge type="handwoven" size={100} delay={1100} />
+        </div>
+        <div className="absolute top-[40%] right-[5%] opacity-[0.08] pointer-events-none hidden xl:block" style={{ transform: "rotate(-5deg)" }}>
+          <StampBadge type="verified" size={90} delay={1400} />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 pt-20 pb-16 sm:px-6 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:pt-28 lg:pb-20 xl:grid-cols-[1fr_480px]">
+          <div className="relative z-10">
+            <p className="text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "#6B1732", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0s forwards" }}>
               {getString(lang, "hero_eyebrow")}
             </p>
-
-            {/* Hero headline — solid colors with 3D depth */}
-            <div className="mt-5">
-              <h1 className="font-display font-bold leading-[1.08] tracking-tight">
-                <span
-                  className="block text-[clamp(2.5rem,6vw,5rem)]"
-                  style={{ color: "var(--band-text)" }}
-                >
-                  {getString(lang, "hero_title_1")}
-                </span>
-                <span
-                  className="block text-[clamp(2.5rem,6vw,5rem)] text-gold"
-                  style={{
-                    textShadow: "2px 3px 0 rgba(0,0,0,0.35), 0 0 60px rgba(212,160,23,0.2)",
-                  }}
-                >
-                  {getString(lang, "hero_title_2")}
-                </span>
-              </h1>
-            </div>
-
-            <p className="mt-6 max-w-xl animate-rise" style={{ animationDelay: "0.8s", color: "color-mix(in oklab, var(--band-text) 75%, transparent)" }}>
+            <div className="mt-4 h-px w-16" style={{ backgroundColor: "#B8860B", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.12s forwards" }} />
+            <h1 className="mt-6 font-serif font-bold leading-[1.05] tracking-tight" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards" }}>
+              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "#22283c" }}>
+                {getString(lang, "hero_title_1")}
+              </span>
+              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "#6B1732", textShadow: "1px 2px 0 rgba(184,134,11,0.15), 0 0 40px rgba(184,134,11,0.08)" }}>
+                {getString(lang, "hero_title_2")}
+              </span>
+            </h1>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed" style={{ color: "#5C5346", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.45s forwards" }}>
               {getString(lang, "hero_sub")}
             </p>
-            <MagneticWrapper className="mt-8 inline-block animate-rise" style={{ animationDelay: "1s" }}>
-            <div className="flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-3" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s forwards" }}>
               {stats?.sampleId && (
-                <GlowButton asChild variant="outlineLight" size="lg">
-                  <Link href={`/verify/${stats.sampleId}`}>
-                    <QrCode className="mr-2 h-4 w-4" />
-                    {getString(lang, "hero_cta")}
-                  </Link>
-                </GlowButton>
+                <MagneticWrapper>
+                  <GlowButton asChild variant="madder" size="lg">
+                    <Link href={"/verify/" + stats.sampleId}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      {getString(lang, "hero_cta")}
+                    </Link>
+                  </GlowButton>
+                </MagneticWrapper>
               )}
-              <GlowButton asChild variant="outlineLight" size="lg">
-                <Link href="/explore">{getString(lang, "hero_cta2")}</Link>
-              </GlowButton>
+              <MagneticWrapper>
+                <GlowButton asChild variant="outline" size="lg">
+                  <Link href="/explore">{getString(lang, "hero_cta2")}</Link>
+                </GlowButton>
+              </MagneticWrapper>
             </div>
-            </MagneticWrapper>
-            <div className="mt-12 grid max-w-md grid-cols-3 gap-6 animate-rise" style={{ animationDelay: "1.2s" }}>
-              <div className="stat-hover rounded-md p-2">
-                <p className="font-display text-3xl text-gold">
-                  <AnimatedCounter value={stats?.products ?? 0} />
-                </p>
-                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Textiles</p>
-              </div>
-              <div className="stat-hover rounded-md p-2">
-                <p className="font-display text-3xl text-gold">
-                  <AnimatedCounter value={stats?.weavers ?? 0} />
-                </p>
-                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Weavers</p>
-              </div>
-              <div className="stat-hover rounded-md p-2">
-                <p className="font-display text-3xl text-gold">
-                  <AnimatedCounter value={stats?.scans ?? 0} />
-                </p>
-                <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: "color-mix(in oklab, var(--band-text) 60%, transparent)" }}>Verifications</p>
-              </div>
+            <div className="mt-10" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s forwards" }}>
+              <SocialProofStrip products={stats?.products ?? 0} weavers={stats?.weavers ?? 0} scans={stats?.scans ?? 0} />
             </div>
           </div>
-          <div className="relative lg:block mt-8 lg:mt-0">
-            <div className="relative h-96 w-full max-w-sm mx-auto lg:mx-0">
-              {/* ShapeBlur WebGL accent behind the stack */}
-              <div className="absolute inset-0 -m-8 overflow-hidden opacity-40" style={{ pointerEvents: "none" }}>
-                <ShapeBlur
-                  variation={2}
-                  shapeSize={1.0}
-                  roundness={0.5}
-                  borderSize={0.03}
-                  circleSize={0.4}
-                  circleEdge={0.6}
-                  pixelRatioProp={1}
-                />
-              </div>
-              {/* Real QR Stack */}
-              <div className="relative z-10 h-full" style={{ pointerEvents: "auto" }}>
-                <QrStack products={completedProducts ?? []} />
-              </div>
+          <div className="relative mt-12 lg:mt-0 lg:ml-auto" style={{ opacity: 0, transform: "translateY(24px) rotate(-2deg)", animation: "hero-qr-enter 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s forwards" }}>
+            <div className="relative" style={{ width: "260px", height: "320px" }}>
+              <div className="absolute -inset-4 rounded-xl border-2 border-dashed pointer-events-none hidden lg:block" style={{ borderColor: "rgba(184,134,11,0.15)", transform: "rotate(-1deg)" }} />
+              <HeroQRStack products={completedProducts ?? []} />
             </div>
+            <div className="absolute -bottom-6 -left-8 h-16 w-16 rounded-sm border shadow-md hidden lg:block" style={{ backgroundColor: "#D4A017", borderColor: "rgba(184,134,11,0.4)", transform: "rotate(12deg)", backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.1) 3px, rgba(255,255,255,0.1) 6px)" }} title="Sambalpuri thread swatch" />
           </div>
+        </div>
+      </section>
+
+      {/* Provenance trail */}
+      <section className="border-y" style={{ borderColor: "#D5CFC0", backgroundColor: "#F3EADD" }}>
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+          <ScrollReveal>
+            <p className="text-center text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "#6B1732" }}>The journey of a verified textile</p>
+            <h2 className="mt-3 text-center font-serif text-2xl font-bold" style={{ color: "#22283c" }}>From loom to your hands</h2>
+            <p className="mt-2 text-center text-sm" style={{ color: "#6B6456" }}>Hover each step to see what the ledger records at that stage.</p>
+          </ScrollReveal>
+          <ProvenanceTrail className="mt-10" />
         </div>
       </section>
 
       <ThreadDivider className="my-0" />
 
-      {/* How it works — ivory section with Threads background */}
       <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 overflow-hidden">
         <div className="relative z-10">
           <ScrollReveal>
-            <h2 className="font-display text-3xl text-primary">How a thread becomes proof</h2>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: "#22283c" }}>How a thread becomes proof</h2>
+            <p className="mt-2 text-sm" style={{ color: "#6B6456" }}>Every step written to an immutable ledger. Edit one entry and the whole chain breaks.</p>
           </ScrollReveal>
-          <div className="mt-10 grid gap-6 md:grid-cols-4">
+          <div className="mt-10 grid gap-5 md:grid-cols-4">
             {[
-              { icon: ScrollText, title: "Weaver logs the craft", body: "Yarn sourcing, dyeing, weaving and finishing are each written to the product ledger." },
-              { icon: ShieldCheck, title: "Hash chain is sealed", body: "Every entry is SHA-256 hashed with the previous hash — edit one and the whole chain breaks." },
-              { icon: QrCode, title: "QR tag is issued", body: "The textile ships with a scannable tag linking to its public authenticity report, anchored on IPFS." },
-              { icon: Landmark, title: "GI authority oversees", body: "Registered crafts, weaver approvals and counterfeit disputes are handled by the authority." },
+              { icon: ScrollText, title: "Weaver logs the craft", body: "Yarn sourcing, natural dyeing, weaving and finishing — each step is timestamped and hashed.", accent: "#6B1732" },
+              { icon: ShieldCheck, title: "Hash chain is sealed", body: "SHA-256 chained entries: each hash depends on the previous. Tamper with one and the chain breaks.", accent: "#B8860B" },
+              { icon: QrCode, title: "QR tag is issued", body: "A scannable tag linking to the public authenticity report, anchored on IPFS.", accent: "#1A6B5A" },
+              { icon: Landmark, title: "GI authority oversees", body: "Registered crafts, weaver approvals and counterfeit disputes handled by the authority.", accent: "#6B1732" },
             ].map((c, i) => (
               <ScrollReveal key={c.title} delay={i * 100}>
-                <div className="rounded-md border border-border bg-card p-6 h-full">
-                  <c.icon className="h-6 w-6 text-madder" />
-                  <h3 className="mt-4 font-display text-lg text-primary">{c.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{c.body}</p>
+                <div className="rounded-md border p-6 h-full transition-all duration-300 hover:shadow-lg" style={{ borderColor: "#D5CFC0", backgroundColor: "#FAF7F0" }}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: c.accent + "10" }}>
+                    <c.icon className="h-4 w-4" style={{ color: c.accent }} />
+                  </div>
+                  <h3 className="mt-4 font-serif text-base font-semibold" style={{ color: "#22283c" }}>{c.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "#6B6456" }}>{c.body}</p>
                 </div>
               </ScrollReveal>
             ))}
@@ -241,7 +160,6 @@ export default function Index() {
 
       <ThreadDivider tone="madder" className="my-0" />
 
-      {/* Role cards */}
       <section className="band-dark">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 md:grid-cols-3">
           {[
