@@ -87,16 +87,13 @@ export default function Index() {
               {getString(lang, "hero_sub")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s forwards" }}>
-              {stats?.sampleId && (
-                <MagneticWrapper>
+              <MagneticWrapper>
                   <GlowButton asChild variant="madder" size="lg">
-                    <Link href={"/verify/" + stats.sampleId}>
-                      <QrCode className="mr-2 h-4 w-4" />
+                    <Link href="/login">
                       {getString(lang, "hero_cta")}
                     </Link>
                   </GlowButton>
                 </MagneticWrapper>
-              )}
               <MagneticWrapper>
                 <GlowButton asChild variant="outline" size="lg">
                   <Link href="/explore">{getString(lang, "hero_cta2")}</Link>

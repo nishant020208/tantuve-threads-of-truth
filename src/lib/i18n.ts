@@ -19,7 +19,7 @@ const strings: Record<Lang, Record<StringKey, string>> = {
     hero_title_2: "for every Patola and ikat.",
     hero_sub:
       "A Sambalpuri saree takes 45 days on the loom. A Patan Patola, six months. Each gets a tamper-proof provenance passport — weaver name, dye batch, loom location, GI certificate number — all verifiable by scan.",
-    hero_cta: "Verify a real textile",
+    hero_cta: "Sign in",
     hero_cta2: "Browse the registry",
     verify_title: "Authenticity report",
     verified: "Authenticity verified",
@@ -45,7 +45,7 @@ const strings: Record<Lang, Record<StringKey, string>> = {
     hero_title_2: "एक जन्म प्रमाणपत्र।",
     hero_sub:
       "सांभलपुरी साड़ी बनने में 45 दिन लगते हैं। पाटन पटोला, छह महीने। हर वस्त्र को एक सुरक्षित प्रमाणपत्र मिलता है — बुनकर का नाम, रंगाई बैच, करघे का स्थान, जीआई प्रमाणपत्र संख्या।",
-    hero_cta: "वस्त्र सत्यापित करें",
+    hero_cta: "साइन इन",
     hero_cta2: "रजिस्ट्री देखें",
     verify_title: "प्रामाणिकता रिपोर्ट",
     verified: "प्रामाणिकता सत्यापित",
