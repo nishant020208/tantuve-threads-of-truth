@@ -23,7 +23,7 @@ export default function Index() {
     queryFn: async () => {
       try {
         const products = await publicApi.explore();
-        return products.filter((p: any) => p.status === "completed").slice(0, 8);
+        return products.filter((p: any) => p.status === "completed");
       } catch {
         return [];
       }
