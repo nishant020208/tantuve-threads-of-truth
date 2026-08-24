@@ -22,6 +22,7 @@ export function QrScanner({ onScan, onClose, label, inline }: QrScannerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [state, setState] = useState<ScannerState>("idle");
+  const [started, setStarted] = useState(false);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
@@ -42,6 +43,7 @@ export function QrScanner({ onScan, onClose, label, inline }: QrScannerProps) {
   }, []);
 
   useEffect(() => {
+    if (!started) return;
     let cancelled = false;
 
     const start = async () => {
@@ -101,7 +103,7 @@ export function QrScanner({ onScan, onClose, label, inline }: QrScannerProps) {
       cancelled = true;
       stopScanner();
     };
-  }, [stopScanner]);
+  }, [stopScanner, started]);
 
   const content = (
     <div className="relative flex flex-col items-center gap-4">
@@ -109,13 +111,24 @@ export function QrScanner({ onScan, onClose, label, inline }: QrScannerProps) {
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
       )}
 
+      {state === "idle" && !started && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <Camera className="h-12 w-12 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Tap to activate your camera</p>
+          <Button variant="madder" onClick={() => setStarted(true)}>
+            <Camera className="mr-2 h-4 w-4" /> Start Camera
+          </Button>
+        </div>
+      )}
+
       {/* Viewfinder */}
-      <div
+      {started && <div
         id="qr-viewfinder"
         ref={containerRef}
         className="relative overflow-hidden rounded-xl border-2 border-primary/40 bg-black"
         style={{ width: inline ? 300 : "100%", maxWidth: 340, height: inline ? 300 : 340 }}
       />
+      }
 
       {/* Viewfinder overlay corners */}
       {state === "scanning" && (
