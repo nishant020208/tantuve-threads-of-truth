@@ -34,15 +34,14 @@ export default function Index() {
     queryKey: ["home-stats"],
     queryFn: async () => {
       try {
-        const [products, weavers, registry] = await Promise.all([
+        const [statsData, products] = await Promise.all([
+          publicApi.stats(),
           publicApi.explore(),
-          publicApi.marketplace(),
-          publicApi.giRegistry(),
         ]);
         return {
-          products: products.length,
-          weavers: weavers.length,
-          scans: 0,
+          products: statsData.products,
+          weavers: statsData.weavers,
+          scans: statsData.verifications,
           sampleId: products[0]?.id ?? null,
         };
       } catch {

@@ -106,6 +106,7 @@ export const publicApi = {
   explore: () => apiFetch<any[]>("/explore"),
   marketplace: () => apiFetch<any[]>("/marketplace"),
   giRegistry: () => apiFetch<any[]>("/gi-registry"),
+  stats: () => apiFetch<{ products: number; weavers: number; verifications: number }>("/stats"),
   applyRetailer: (data: { email: string; password: string; business_name: string; location: string; contact_email?: string }) =>
     apiFetch<any>("/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
 };
