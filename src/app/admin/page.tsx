@@ -35,7 +35,7 @@ export default function AdminPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks"] as const).map((t) => (
+            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
                 {t === "spot-checks" ? "Spot Checks" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
