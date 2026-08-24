@@ -78,6 +78,25 @@ export const adminApi = {
   spotChecks: () => apiFetch<any[]>("/admin/spot-checks"),
   reviewSpotCheck: (productId: string, action: string) =>
     apiFetch<any>(`/admin/spot-checks/${productId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
+  whitelist: (status?: string, role?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (role) params.set("role", role);
+    const qs = params.toString();
+    return apiFetch<any[]>("/admin/whitelist" + (qs ? "?" + qs : ""));
+  },
+  createWhitelist: (data: { identifier: string; requested_role: string; applicant_name?: string; applicant_location?: string; applicant_craft?: string; review_note?: string }) =>
+    apiFetch<any>("/admin/whitelist", { method: "POST", body: JSON.stringify(data) }),
+  approveWhitelist: (id: string, note?: string) =>
+    apiFetch<any>("/admin/whitelist/" + id + "/approve", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+  rejectWhitelist: (id: string, note: string) =>
+    apiFetch<any>("/admin/whitelist/" + id + "/reject", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+  revokeWhitelist: (id: string, note: string) =>
+    apiFetch<any>("/admin/whitelist/" + id + "/revoke", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+  auditWhitelist: (id: string) =>
+    apiFetch<any[]>("/admin/whitelist/" + id + "/audit"),
+  bulkWhitelist: (ids: string[], action: "approve" | "reject", note?: string) =>
+    apiFetch<any>("/admin/whitelist/bulk", { method: "POST", body: JSON.stringify({ ids, action, review_note: note }) }),
   retailers: (status?: string) => apiFetch<any[]>(`/admin/retailers${status ? `?status=${status}` : ""}`),
   approveRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/approve`, { method: "POST" }),
   rejectRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/reject`, { method: "POST" }),

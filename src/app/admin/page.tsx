@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/session";
 import { adminApi } from "@/lib/api";
 import { AnimatedCounter } from "@/components/animated-counter";
+import { WhitelistManager } from "@/components/whitelist-manager";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist">("dashboard");
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
@@ -49,6 +50,7 @@ export default function AdminPage() {
           {tab === "registry" && <RegistryManager />}
           {tab === "flagged" && <FlaggedEntries />}
           {tab === "spot-checks" && <SpotChecks />}
+          {tab === "whitelist" && <WhitelistManager />}
         </div>
       </div>
       <SiteFooter />
