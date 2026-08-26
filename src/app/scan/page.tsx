@@ -13,10 +13,19 @@ export default function ScanPage() {
   const router = useRouter();
   const [manualId, setManualId] = useState("");
   const [showCamera, setShowCamera] = useState(false);
+  const [isOpeningCamera, setIsOpeningCamera] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const go = (e: React.FormEvent) => {
+  const go = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualId.trim()) router.push(`/verify/${manualId.trim().toUpperCase()}`);
+    setIsVerifying(true);
+    try {
+      if (manualId.trim()) {
+        router.push(`/verify/${manualId.trim().toUpperCase()}`);
+      }
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleScan = (decodedText: string) => {
@@ -46,10 +55,18 @@ export default function ScanPage() {
         <div className="mt-8">
           {!showCamera ? (
             <Button
-              onClick={() => setShowCamera(true)}
+              onClick={async () => {
+                setIsOpeningCamera(true);
+                try {
+                  setShowCamera(true);
+                } finally {
+                  setIsOpeningCamera(false);
+                }
+              }}
               variant="madder"
               size="lg"
               className="w-full"
+              isLoading={isOpeningCamera}
             >
               <QrCode className="mr-2 h-5 w-5" />
               Open Camera to Scan
@@ -81,7 +98,7 @@ export default function ScanPage() {
                 value={manualId}
                 onChange={(e) => setManualId(e.target.value.toUpperCase())}
               />
-              <Button type="submit" variant="madder">
+              <Button type="submit" variant="madder" isLoading={isVerifying}>
                 <Search className="mr-2 h-4 w-4" /> Verify
               </Button>
             </div>
