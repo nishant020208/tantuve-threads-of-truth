@@ -43,11 +43,19 @@ export const authApi = {
   me: () => apiFetch<{ user_id: string; role: string }>("/me"),
 };
 
+interface WeaverProduct {
+  id: string;
+  title: string;
+  craft_type: string;
+  status: string;
+  // Add other fields as needed
+}
+
 export const weaverApi = {
-  products: () => apiFetch<any[]>("/weaver/products"),
+  products: () => apiFetch<WeaverProduct[]>("/weaver/products"),
   createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string }) =>
     apiFetch<{ productId: string }>("/weaver/products", { method: "POST", body: JSON.stringify(data) }),
-  getProduct: (id: string) => apiFetch<any>(`/weaver/products/${id}`),
+  getProduct: (id: string) => apiFetch<WeaverProduct>(`/weaver/products/${id}`),
   appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string }) =>
     apiFetch<any>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
@@ -55,47 +63,120 @@ export const weaverApi = {
   qrUrl: (productId: string) => API_BASE ? `${API_BASE}/weaver/products/${productId}/qr` : `/api/weaver/products/${productId}/qr`,
 };
 
+interface AdminDashboard {
+  totalWeavers: number;
+  pendingWeavers: number;
+  totalProducts: number;
+  openDisputes: number;
+}
+
+interface Weaver {
+  id: string;
+  name: string;
+  craft_type: string;
+  region: string;
+  gi_registered: boolean;
+  // Add other fields as needed
+}
+
+interface Product {
+  id: string;
+  title: string;
+  craft_type: string;
+  status: string;
+  // Add other fields as needed
+}
+
+interface RegistryItem {
+  id: string;
+  craft_type: string;
+  region: string;
+  official_description: string;
+  // Add other fields as needed
+}
+
+interface Dispute {
+  id: string;
+  product_id: string;
+  reason: string;
+  status: string;
+  // Add other fields as needed
+}
+
+interface FlaggedEntry {
+  id: string;
+  product_id: string;
+  seq: number;
+  step_name: string;
+  flagged_reason: string;
+  // Add other fields as needed
+}
+
+interface SpotCheck {
+  id: string;
+  title: string;
+  craft_type: string;
+  spot_check_status: string;
+  // Add other fields as needed
+}
+
+interface WhitelistItem {
+  id: string;
+  identifier: string;
+  requested_role: string;
+  status: string;
+  // Add other fields as needed
+}
+
+interface Retailer {
+  id: string;
+  business_name: string;
+  location: string;
+  request_status: string;
+  // Add other fields as needed
+}
+
 export const adminApi = {
-  dashboard: () => apiFetch<any>("/admin/dashboard"),
-  weavers: (status?: string) => apiFetch<any[]>(`/admin/weavers${status ? `?status=${status}` : ""}`),
-  approveWeaver: (id: string) => apiFetch<any>(`/admin/weavers/${id}/approve`, { method: "POST" }),
-  rejectWeaver: (id: string) => apiFetch<any>(`/admin/weavers/${id}/reject`, { method: "POST" }),
-  products: () => apiFetch<any[]>("/admin/products"),
-  registry: () => apiFetch<any[]>("/admin/registry"),
+  dashboard: () => apiFetch<AdminDashboard>("/admin/dashboard"),
+  weavers: (status?: string) => apiFetch<Weaver[]>(`/admin/weavers${status ? `?status=${status}` : ""}`),
+  approveWeaver: (id: string) => apiFetch<{ success: boolean }>(`/admin/weavers/${id}/approve`, { method: "POST" }),
+  rejectWeaver: (id: string) => apiFetch<{ success: boolean }>(`/admin/weavers/${id}/reject`, { method: "POST" }),
+  products: () => apiFetch<Product[]>("/admin/products"),
+  registry: () => apiFetch<RegistryItem[]>("/admin/registry"),
   addRegistry: (data: { craft_type: string; region: string; official_description: string }) =>
-    apiFetch<any>("/admin/registry", { method: "POST", body: JSON.stringify(data) }),
-  disputes: () => apiFetch<any[]>("/admin/disputes"),
+    apiFetch<{ success: boolean }>("/admin/registry", { method: "POST", body: JSON.stringify(data) }),
+  disputes: () => apiFetch<Dispute[]>("/admin/disputes"),
   resolveDispute: (id: string, status: string) =>
-    apiFetch<any>(`/admin/disputes/${id}/resolve`, { method: "POST", body: JSON.stringify({ status }) }),
-  analytics: () => apiFetch<any>("/admin/analytics"),
-  flagged: () => apiFetch<any[]>("/admin/flagged"),
+    apiFetch<{ success: boolean }>(`/admin/disputes/${id}/resolve`, { method: "POST", body: JSON.stringify({ status }) }),
+  analytics: () => apiFetch<any>("/admin/analytics"), // Keeping any for complex analytics data
+  flagged: () => apiFetch<FlaggedEntry[]>("/admin/flagged"),
   reviewFlagged: (entryId: string, action: string) =>
-    apiFetch<any>(`/admin/flagged/${entryId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
-  spotChecks: () => apiFetch<any[]>("/admin/spot-checks"),
+    apiFetch<{ success: boolean }>(`/admin/flagged/${entryId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
+  spotChecks: () => apiFetch<SpotCheck[]>("/admin/spot-checks"),
   reviewSpotCheck: (productId: string, action: string) =>
-    apiFetch<any>(`/admin/spot-checks/${productId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
+    apiFetch<{ success: boolean }>(`/admin/spot-checks/${productId}/review`, { method: "POST", body: JSON.stringify({ action }) }),
   whitelist: (status?: string, role?: string) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (role) params.set("role", role);
     const qs = params.toString();
-    return apiFetch<any[]>("/admin/whitelist" + (qs ? "?" + qs : ""));
+    return apiFetch<WhitelistItem[]>("/admin/whitelist" + (qs ? "?" + qs : ""));
   },
   createWhitelist: (data: { identifier: string; requested_role: string; applicant_name?: string; applicant_location?: string; applicant_craft?: string; review_note?: string }) =>
-    apiFetch<any>("/admin/whitelist", { method: "POST", body: JSON.stringify(data) }),
+    apiFetch<{ success: boolean }>("/admin/whitelist", { method: "POST", body: JSON.stringify(data) }),
   approveWhitelist: (id: string, note?: string) =>
-    apiFetch<any>("/admin/whitelist/" + id + "/approve", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+    apiFetch<{ success: boolean }>("/admin/whitelist/" + id + "/approve", { method: "POST", body: JSON.stringify({ review_note: note }) }),
   rejectWhitelist: (id: string, note: string) =>
-    apiFetch<any>("/admin/whitelist/" + id + "/reject", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+    apiFetch<{ success: boolean }>("/admin/whitelist/" + id + "/reject", { method: "POST", body: JSON.stringify({ review_note: note }) }),
   revokeWhitelist: (id: string, note: string) =>
-    apiFetch<any>("/admin/whitelist/" + id + "/revoke", { method: "POST", body: JSON.stringify({ review_note: note }) }),
+    apiFetch<{ success: boolean }>("/admin/whitelist/" + id + "/revoke", { method: "POST", body: JSON.stringify({ review_note: note }) }),
   auditWhitelist: (id: string) =>
-    apiFetch<any[]>("/admin/whitelist/" + id + "/audit"),
+    apiFetch<any[]>(`/admin/whitelist/${id}/audit`), // Keeping any for audit complexity
   bulkWhitelist: (ids: string[], action: "approve" | "reject", note?: string) =>
-    apiFetch<any>("/admin/whitelist/bulk", { method: "POST", body: JSON.stringify({ ids, action, review_note: note }) }),
-  retailers: (status?: string) => apiFetch<any[]>(`/admin/retailers${status ? `?status=${status}` : ""}`),
-  approveRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/approve`, { method: "POST" }),
-  rejectRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/reject`, { method: "POST" }),
+    apiFetch<{ success: boolean }>("/admin/whitelist/bulk", { method: "POST", body: JSON.stringify({ ids, action, review_note: note }) }),
+  retailers: (status?: string) => apiFetch<Retailer[]>(`/admin/retailers${status ? `?status=${status}` : ""}`),
+  approveRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/approve`, { method: "POST" }),
+  rejectRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/reject`, { method: "POST" }),
 };
 
 export const retailerApi = {
