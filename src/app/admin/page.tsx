@@ -68,6 +68,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+interface AdminDashboardData {
+  totalWeavers: number;
+  pendingWeavers: number;
+  totalProducts: number;
+  openDisputes: number;
+}
+
 function Dashboard() {
   const { data } = useQuery({ queryKey: ["admin-dashboard"], queryFn: adminApi.dashboard });
 
