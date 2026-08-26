@@ -40,6 +40,9 @@ export default function VerifyPage() {
   const productId = params.productId as string;
   const [reason, setReason] = useState("");
   const [contact, setContact] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const qr = useQrDataUrl(verifyUrl(productId), 220);
 
   const { data, isLoading, error } = useQuery({
