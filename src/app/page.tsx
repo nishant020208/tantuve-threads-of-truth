@@ -15,6 +15,7 @@ import { SocialProofStrip } from "@/components/social-proof-strip";
 import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { publicApi } from "@/lib/api";
+import { motion } from "motion/react";
 export default function Index() {
   const { lang } = useSession();
 
@@ -51,6 +52,12 @@ export default function Index() {
   });
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.8 }}
+    >
     <div className="min-h-screen bg-background">
       <SiteHeader transparent={false} />
 
@@ -179,5 +186,6 @@ export default function Index() {
 
       <SiteFooter />
     </div>
+    </motion.div>
   );
 }
