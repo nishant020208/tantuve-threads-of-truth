@@ -41,7 +41,6 @@ export function AnimatedCounter({
     const animate = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(eased * value));
       if (progress < 1) requestAnimationFrame(animate);

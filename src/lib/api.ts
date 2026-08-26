@@ -20,7 +20,6 @@ async function apiFetch<T = unknown>(
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  // Use API_BASE if set, otherwise use /api/* serverless functions
   const url = API_BASE ? `${API_BASE}${path}` : `/api${path}`;
   let res: Response;
   try {
@@ -35,7 +34,6 @@ async function apiFetch<T = unknown>(
   return res.json();
 }
 
-// --- Auth ---
 export const authApi = {
   login: (email: string, password: string) =>
     apiFetch<{ token: string; user: { id: string; email: string; full_name: string; role: string } }>(
@@ -45,7 +43,6 @@ export const authApi = {
   me: () => apiFetch<{ user_id: string; role: string }>("/me"),
 };
 
-// --- Weaver ---
 export const weaverApi = {
   products: () => apiFetch<any[]>("/weaver/products"),
   createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string }) =>
@@ -58,7 +55,6 @@ export const weaverApi = {
   qrUrl: (productId: string) => API_BASE ? `${API_BASE}/weaver/products/${productId}/qr` : `/api/weaver/products/${productId}/qr`,
 };
 
-// --- Admin ---
 export const adminApi = {
   dashboard: () => apiFetch<any>("/admin/dashboard"),
   weavers: (status?: string) => apiFetch<any[]>(`/admin/weavers${status ? `?status=${status}` : ""}`),
@@ -102,7 +98,6 @@ export const adminApi = {
   rejectRetailer: (id: string) => apiFetch<any>(`/admin/retailers/${id}/reject`, { method: "POST" }),
 };
 
-// --- Retailer ---
 export const retailerApi = {
   receive: (productId: string) =>
     apiFetch<any>("/retailer/receive", { method: "POST", body: JSON.stringify({ product_id: productId }) }),
@@ -114,7 +109,6 @@ export const retailerApi = {
     }),
 };
 
-// --- Public ---
 export const publicApi = {
   verify: (productId: string) => apiFetch<any>(`/verify/${productId}`),
   report: (productId: string, reason: string, contact?: string) =>

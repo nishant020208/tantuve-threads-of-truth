@@ -54,7 +54,6 @@ export default function DockNav() {
     router.push("/login");
   };
 
-  // Public (not logged in)
   if (!session || !role) {
     return (
       <Dock
@@ -71,7 +70,6 @@ export default function DockNav() {
     );
   }
 
-  // Weaver dashboard
   if (role === "weaver") {
     return (
       <Dock
@@ -88,7 +86,6 @@ export default function DockNav() {
     );
   }
 
-  // Admin dashboard
   if (role === "admin") {
     return (
       <Dock
@@ -107,7 +104,6 @@ export default function DockNav() {
     );
   }
 
-  // Retailer dashboard
   if (role === "retailer") {
     return (
       <Dock

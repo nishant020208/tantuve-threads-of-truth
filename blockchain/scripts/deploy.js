@@ -26,7 +26,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Compile contract
   const contractPath = path.join(__dirname, "..", "contracts", "TantuveRegistry.sol");
   const source = fs.readFileSync(contractPath, "utf-8");
 
@@ -54,7 +53,6 @@ async function main() {
   const abi = contractOutput.abi;
   const bytecode = contractOutput.evm.bytecode.object;
 
-  // Deploy
   console.log("Deploying TantuveRegistry...");
   const Factory = new ethers.ContractFactory(abi, bytecode, wallet);
   const contract = await Factory.deploy();
@@ -65,7 +63,6 @@ async function main() {
   console.log(`   Chain: Polygon Amoy (80002)`);
   console.log(`   Explorer: https://amoy.polygonscan.com/address/${contractAddress}`);
 
-  // Write artifact for the frontend
   const artifact = { address: contractAddress, abi };
   const outPath = path.join(__dirname, "..", "..", "src", "lib", "contract.json");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -77,3 +74,4 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
