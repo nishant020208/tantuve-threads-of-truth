@@ -43,12 +43,32 @@ export const authApi = {
   me: () => apiFetch<{ user_id: string; role: string }>("/me"),
 };
 
-interface WeaverProduct {
+export interface WeaverProduct {
   id: string;
   title: string;
   craft_type: string;
   status: string;
-  // Add other fields as needed
+  lot_id?: string;
+  yarn_source?: string;
+  createdAt: string;
+  updatedAt: string;
+  ledger_entries?: Array<{
+    step_name: string;
+    step_data: Record<string, any>;
+    actor: string;
+    timestamp: string;
+    photo_base64?: string;
+  }>;
+}
+
+interface AppendStepResponse {
+  success: boolean;
+  entryId: string;
+}
+
+interface CompleteProductResponse {
+  success: boolean;
+  ipfsCid: string;
 }
 
 export const weaverApi = {
@@ -57,42 +77,45 @@ export const weaverApi = {
     apiFetch<{ productId: string }>("/weaver/products", { method: "POST", body: JSON.stringify(data) }),
   getProduct: (id: string) => apiFetch<WeaverProduct>(`/weaver/products/${id}`),
   appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string }) =>
-    apiFetch<any>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
+    apiFetch<AppendStepResponse>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
-    apiFetch<any>(`/weaver/products/${productId}/complete`, { method: "POST" }),
+    apiFetch<CompleteProductResponse>(`/weaver/products/${productId}/complete`, { method: "POST" }),
   qrUrl: (productId: string) => API_BASE ? `${API_BASE}/weaver/products/${productId}/qr` : `/api/weaver/products/${productId}/qr`,
 };
 
-interface AdminDashboard {
+export interface AdminDashboard {
   totalWeavers: number;
   pendingWeavers: number;
   totalProducts: number;
   openDisputes: number;
 }
 
-interface Weaver {
+export interface Weaver {
   id: string;
   name: string;
   craft_type: string;
   region: string;
   gi_registered: boolean;
-  // Add other fields as needed
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface Product {
+export interface Product {
   id: string;
   title: string;
   craft_type: string;
   status: string;
-  // Add other fields as needed
+  weaver_id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface RegistryItem {
+export interface RegistryItem {
   id: string;
   craft_type: string;
   region: string;
   official_description: string;
-  // Add other fields as needed
 }
 
 interface Dispute {
@@ -128,11 +151,13 @@ interface WhitelistItem {
   // Add other fields as needed
 }
 
-interface Retailer {
+export interface Retailer {
   id: string;
   business_name: string;
+  name?: string;
   location: string;
   request_status: string;
+  user_id?: string;
   // Add other fields as needed
 }
 

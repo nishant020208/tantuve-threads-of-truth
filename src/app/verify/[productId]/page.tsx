@@ -106,6 +106,44 @@ export default function VerifyPage() {
   const { product, entries, weaver, gi, ipfsCid, ipfsUrl, ipfsVerified } = data;
   const finalResult = browserResult;
 
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadCertificate({
+        productId: product.id,
+        title: product.title,
+        craftType: product.craft_type,
+        region: weaver?.region || "",
+        weaverName: weaver?.name || "",
+        giRegistered: !!gi,
+        finalHash: entries.length > 0 ? entries[entries.length - 1].entry_hash : "",
+        steps: entries.map((entry: any, index: number) => ({
+          seq: entry.seq,
+          step_name: entry.step_name,
+          timestamp: entry.timestamp,
+          entry_hash: entry.entry_hash
+        })),
+        qrDataUrl: qr,
+        verifyUrl: verifyUrl(productId),
+        ipfsCid: ipfsCid,
+        ipfsUrl: ipfsUrl
+      });
+      toast.success("Certificate downloaded");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download certificate");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    setIsPrinting(true);
+    // Trigger print dialog
+    window.print();
+    // Note: We can't know when print actually finishes, so reset after a delay
+    setTimeout(() => setIsPrinting(false), 1000);
+  };
+
   const submitDispute = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);

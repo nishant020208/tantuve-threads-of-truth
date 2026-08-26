@@ -67,7 +67,20 @@ export function CustomCursor() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
     setIsTouch(!hasHover || prefersReduced);
-  }, []);
+
+    // Handle theme changes for cursor colors
+    const handleThemeChange = () => {
+      colorsRef.current = getThemeColors(theme);
+    };
+
+    // Listen for theme changes if using system theme
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', handleThemeChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleThemeChange);
+    };
+  }, [theme]);
 
   // Store theme colors in a ref so animate() always reads latest
   const colorsRef = useRef(getThemeColors(theme));

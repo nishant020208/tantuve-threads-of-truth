@@ -19,10 +19,13 @@ const badgeVariants = cva(
   }
 );
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
+  /** Whether the badge should pulse (useful for notifications) */
+  isPulsing?: boolean;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+function Badge({ className, variant, isPulsing = false, ...props }: BadgeProps) {
+  return <div className={cn(badgeVariants({ variant }), className, isPulsing && "animate-pulse")} {...props} />;
 }
 
 export { Badge, badgeVariants };

@@ -14,6 +14,7 @@ import { useSession } from "@/lib/session";
 import { adminApi } from "@/lib/api";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { WhitelistManager } from "@/components/whitelist-manager";
+import type { Retailer, Weaver, Product } from "@/lib/api";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
@@ -137,7 +138,7 @@ function RetailerManager() {
       </div>
       <div className="mt-4 space-y-3">
         {(!retailers || retailers.length === 0) && <p className="text-sm text-muted-foreground">No retailers found.</p>}
-        {retailers?.map((r: any) => (
+        {retailers?.map((r: Retailer) => (
           <div key={r.id} className="flex items-center justify-between rounded-md border border-border bg-card p-4">
             <div>
               <p className="font-medium text-primary">{r.business_name ?? r.name}</p>
@@ -201,7 +202,7 @@ function WeaverManager() {
       </div>
       <div className="mt-4 space-y-3">
         {(!weavers || weavers.length === 0) && <p className="text-sm text-muted-foreground">No weavers found.</p>}
-        {weavers?.map((w: any) => (
+        {weavers?.map((w: Weaver) => (
           <div key={w.id} className="flex items-center justify-between rounded-md border border-border bg-card p-4">
             <div>
               <p className="font-medium text-primary">{w.name}</p>
@@ -231,7 +232,7 @@ function ProductList() {
   return (
     <div className="space-y-3">
       {(!products || products.length === 0) && <p className="text-sm text-muted-foreground">No products found.</p>}
-      {products?.map((p: any) => (
+      {products?.map((p: Product) => (
         <div key={p.id} className="flex items-center justify-between rounded-md border border-border bg-card p-4">
           <div>
             <p className="font-medium text-primary">{p.title ?? p.id}</p>

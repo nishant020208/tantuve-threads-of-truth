@@ -14,6 +14,8 @@ import { useSession } from "@/lib/session";
 import { weaverApi } from "@/lib/api";
 import { PRODUCTION_STEPS } from "@/lib/chain";
 
+import { motion } from "motion/react";
+
 export default function WeaverPage() {
   const { session, role, loading } = useSession();
   const qc = useQueryClient();
@@ -101,117 +103,134 @@ export default function WeaverPage() {
   const products = data ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-        <h1 className="font-display text-4xl text-primary">Weaver workspace</h1>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.8 }}
+    >
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+          <h1 className="font-display text-4xl text-primary">Weaver workspace</h1>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.4fr]">
-          <form onSubmit={submit} className="h-fit rounded-md border border-border bg-card p-6">
-            <h2 className="font-display text-xl text-primary">Register a textile</h2>
-            <div className="mt-4 space-y-3">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="craft">Craft type</Label>
-                <Input id="craft" required value={form.craft_type} onChange={(e) => setForm({ ...form, craft_type: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="yarn">Yarn source</Label>
-                <Input id="yarn" value={form.yarn_source} onChange={(e) => setForm({ ...form, yarn_source: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="lot">Batch / lot ID</Label>
-                <Input id="lot" value={form.lot_id} onChange={(e) => setForm({ ...form, lot_id: e.target.value })} />
-              </div>
-              <Button type="submit" variant="madder" disabled={busy}>
-                {busy ? "Registering…" : "Register textile"}
-              </Button>
-            </div>
-          </form>
-
-          <div className="space-y-4">
-            {products.length === 0 && (
-              <p className="text-sm text-muted-foreground">No textiles registered yet.</p>
-            )}
-            {products.map((p: any) => {
-              const logged = new Set((p.ledger_entries ?? []).map((l: any) => l.step_name));
-              const allStepsLogged = PRODUCTION_STEPS.every((s) => logged.has(s.key));
-              return (
-                <div key={p.id} className="rounded-md border border-border bg-card p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="font-display text-lg text-primary">{p.title ?? p.id}</h3>
-                      <p className="font-mono text-xs tracking-widest text-muted-foreground">{p.id}</p>
-                    </div>
-                    <Badge variant={p.status === "completed" ? "default" : "secondary"}>{p.status}</Badge>
-                  </div>
-
-                  {p.status !== "completed" && (
-                    <>
-                      <div className="mt-4">
-                        <Label className="text-xs text-muted-foreground">Photo evidence (optional, strongly recommended)</Label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-sm file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground hover:file:bg-primary/90"
-                          onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-                        />
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {PRODUCTION_STEPS.map((s) => (
-                          <Button
-                            key={s.key}
-                            size="sm"
-                            variant={logged.has(s.key) ? "secondary" : "outline"}
-                            disabled={logged.has(s.key) || stepBusy === s.key}
-                            onClick={() => logStep(p.id, s.key, s.label)}
-                          >
-                            {stepBusy === s.key ? "Uploading…" : logged.has(s.key) ? `✓ ${s.label}` : `Log ${s.label}`}
-                          </Button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  {allStepsLogged && p.status !== "completed" && (
-                    <Button
-                      className="mt-3"
-                      size="sm"
-                      variant="gold"
-                      disabled={completing === p.id}
-                      onClick={() => completeProduct(p.id)}
-                    >
-                      {completing === p.id ? "Pinning to IPFS…" : "Complete & Pin to IPFS"}
-                    </Button>
-                  )}
-
-                  {p.status === "completed" && (
-                    <div className="mt-3 rounded-md border border-teal/40 bg-teal/5 p-3 text-sm text-teal">
-                      ✓ Completed — hash chain pinned to IPFS
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Button asChild size="sm" variant="ghost">
-                      <Link href={`/verify/${p.id}`}>View public report →</Link>
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setSelected(selected === p.id ? null : p.id)}>
-                      {selected === p.id ? "Hide QR tag" : "QR tag"}
-                    </Button>
-                  </div>
-
-                  {selected === p.id && <QrPanel className="mt-5" productId={p.id} size={180} />}
+          <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+            <form onSubmit={submit} className="h-fit rounded-md border border-border bg-card p-6">
+              <h2 className="font-display text-xl text-primary">Register a textile</h2>
+              <div className="mt-4 space-y-3">
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input id="title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 </div>
-              );
-            })}
+                <div>
+                  <Label htmlFor="craft">Craft type</Label>
+                  <Input id="craft" required value={form.craft_type} onChange={(e) => setForm({ ...form, craft_type: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="yarn">Yarn source</Label>
+                  <Input id="yarn" value={form.yarn_source} onChange={(e) => setForm({ ...form, yarn_source: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="lot">Batch / lot ID</Label>
+                  <Input id="lot" value={form.lot_id} onChange={(e) => setForm({ ...form, lot_id: e.target.value })} />
+                </div>
+                <Button type="submit" variant="madder" disabled={busy}>
+                  {busy ? "Registering…" : "Register textile"}
+                </Button>
+              </div>
+            </form>
+
+            <div className="space-y-4">
+              {products.length === 0 && (
+                <p className="text-sm text-muted-foreground">No textiles registered yet.</p>
+              )}
+              {products.map((p: any) => {
+                const logged = new Set((p.ledger_entries ?? []).map((l: any) => l.step_name));
+                const allStepsLogged = PRODUCTION_STEPS.every((s) => logged.has(s.key));
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: products.indexOf(p) * 0.1 }}
+                    className="rounded-md border border-border bg-card p-6"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-display text-lg text-primary">{p.title ?? p.id}</h3>
+                        <p className="font-mono text-xs tracking-widest text-muted-foreground">{p.id}</p>
+                      </div>
+                      <Badge variant={p.status === "completed" ? "default" : "secondary"}>{p.status}</Badge>
+                    </div>
+
+                    {p.status !== "completed" && (
+                      <>
+                        <div className="mt-4">
+                          <Label className="text-xs text-muted-foreground">Photo evidence (optional, strongly recommended)</Label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-sm file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground hover:file:bg-primary/90"
+                            onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {PRODUCTION_STEPS.map((s) => (
+                            <Button
+                              key={s.key}
+                              size="sm"
+                              variant={logged.has(s.key) ? "secondary" : "outline"}
+                              disabled={logged.has(s.key) || stepBusy === s.key}
+                              onClick={() => logStep(p.id, s.key, s.label)}
+                            >
+                              {stepBusy === s.key ? "Uploading…" : logged.has(s.key) ? "✓ " + s.label : "Log " + s.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {allStepsLogged && p.status !== "completed" && (
+                      <Button
+                        className="mt-3"
+                        size="sm"
+                        variant="gold"
+                        disabled={completing === p.id}
+                        onClick={() => completeProduct(p.id)}
+                      >
+                        {completing === p.id ? "Pinning to IPFS…" : "Complete & Pin to IPFS"}
+                      </Button>
+                    )}
+
+                    {p.status === "completed" && (
+                      <div className="mt-3 rounded-md border border-teal/40 bg-teal/5 p-3 text-sm text-teal">
+                        ✓ Completed — hash chain pinned to IPFS
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Button asChild size="sm" variant="ghost">
+                        <Link href={`/verify/${p.id}`}>View public report →</Link>
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setSelected(selected === p.id ? null : p.id)}>
+                        {selected === p.id ? "Hide QR tag" : "QR tag"}
+                      </Button>
+                    </div>
+
+                    {selected === p.id && (
+                      <div>
+                        <QrPanel productId={p.id} size={180} />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
+        <SiteFooter />
       </div>
-      <SiteFooter />
-    </div>
+    </motion.div>
   );
 }
 
