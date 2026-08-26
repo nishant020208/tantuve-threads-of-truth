@@ -105,6 +105,7 @@ export default function VerifyPage() {
 
   const submitDispute = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       await publicApi.report(productId, reason, contact || undefined);
       setReason("");
@@ -112,6 +113,8 @@ export default function VerifyPage() {
       toast.success("Counterfeit report sent to the GI authority");
     } catch (err: any) {
       toast.error(err.message || "Failed to submit report");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -231,33 +234,34 @@ export default function VerifyPage() {
             {finalResult?.valid && (
               <Button
                 variant="madder"
-                onClick={() =>
-                  downloadCertificate({
-                    productId: product.id,
-                    title: product.title,
-                    craftType: product.craft_type,
-                    region: weaver?.region || "",
-                    weaverName: weaver?.name || "",
-                    giRegistered: !!gi,
-                    finalHash: finalResult.finalHash || "",
-                    steps: entries.map((e: any) => ({
-                      seq: e.seq,
-                      step_name: e.step_name,
-                      timestamp: e.timestamp,
-                      entry_hash: e.entry_hash,
-                    })),
-                    verifyUrl: verifyUrl(productId),
-                    ipfsCid: ipfsCid || null,
-                    ipfsUrl: ipfsUrl || null,
-                  })
-                }
+                onClick={handleDownload}
+                isLoading={isDownloading}
               >
-                <FileDown className="mr-2 h-4 w-4" />
-                Download certificate
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Download certificate
+                  </>
+                )}
               </Button>
             )}
-            <Button variant="outline" onClick={() => window.print()}>
-              Print report
+            <Button variant="outline" onClick={handlePrint} isLoading={isPrinting}>
+              {isPrinting ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Printing...
+                </>
+              ) : (
+                <>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Print report
+                </>
+              )}
             </Button>
           </div>
 
