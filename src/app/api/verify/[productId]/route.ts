@@ -94,6 +94,36 @@ export async function GET(
       .from("scans").select("id", { count: "exact", head: true })
       .eq("product_id", productId);
 
+    // Real IPFS verification — fetch pinned content and compare
+    let ipfsVerified = false;
+    let ipfsContent: Record<string, unknown> | null = null;
+    if (product.ipfs_cid) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const ipfsRes = await fetch(
+          `https://gateway.pinata.cloud/ipfs/${product.ipfs_cid}`,
+          { signal: controller.signal },
+        );
+        clearTimeout(timeout);
+        if (ipfsRes.ok) {
+          ipfsContent = await ipfsRes.json();
+          // Compare the chain metadata
+          const pinnedLatestHash = (ipfsContent as any)?.latest_hash;
+          const pinnedChainLength = (ipfsContent as any)?.chain_length;
+          if (pinnedLatestHash && verification.finalHash) {
+            ipfsVerified = pinnedLatestHash === verification.finalHash;
+          }
+          if (pinnedChainLength && entries) {
+            ipfsVerified = ipfsVerified && pinnedChainLength === entries.length;
+          }
+        }
+      } catch {
+        // IPFS gateway timeout or error — verification degraded
+        ipfsVerified = false;
+      }
+    }
+
     return NextResponse.json({
       product,
       entries: entries || [],
@@ -104,7 +134,8 @@ export async function GET(
       ipfsUrl: product.ipfs_cid
         ? `https://gateway.pinata.cloud/ipfs/${product.ipfs_cid}`
         : null,
-      ipfsVerified: false,
+      ipfsVerified,
+      ipfsDegraded: product.ipfs_cid && !ipfsVerified ? true : false,
       scanCount: scanCount || 0,
       verification,
     });
