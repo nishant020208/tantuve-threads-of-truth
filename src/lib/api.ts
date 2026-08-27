@@ -80,6 +80,7 @@ export const weaverApi = {
     apiFetch<AppendStepResponse>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
     apiFetch<CompleteProductResponse>(`/weaver/products/${productId}/complete`, { method: "POST" }),
+  earnings: () => apiFetch<any>("/weaver/earnings"),
   qrUrl: (productId: string) => API_BASE ? `${API_BASE}/weaver/products/${productId}/qr` : `/api/weaver/products/${productId}/qr`,
 };
 
@@ -228,4 +229,9 @@ export const publicApi = {
   stats: () => apiFetch<{ products: number; weavers: number; verifications: number }>("/stats"),
   applyRetailer: (data: { email: string; password: string; business_name: string; location: string; contact_email?: string }) =>
     apiFetch<any>("/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
+  mapData: () => apiFetch<any[]>("/map-data"),
+  weaversLeaderboard: () => apiFetch<any[]>("/weavers-leaderboard"),
+  riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
+  smsSimulator: (data: { phone: string; message: string }) =>
+    apiFetch<any>("/sms-simulator", { method: "POST", body: JSON.stringify(data) }),
 };
