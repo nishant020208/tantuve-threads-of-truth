@@ -13,6 +13,7 @@ import { QrPanel } from "@/components/qr-panel";
 import { useSession } from "@/lib/session";
 import { weaverApi } from "@/lib/api";
 import { PRODUCTION_STEPS } from "@/lib/chain";
+import { AnimatedCounter } from "@/components/animated-counter";
 
 import { motion } from "motion/react";
 
@@ -28,6 +29,12 @@ export default function WeaverPage() {
     enabled: Boolean(session),
     queryKey: ["weaver-products"],
     queryFn: weaverApi.products,
+  });
+
+  const { data: earnings } = useQuery({
+    enabled: Boolean(session),
+    queryKey: ["weaver-earnings"],
+    queryFn: weaverApi.earnings,
   });
 
   if (loading) return <Shell>Loading…</Shell>;
@@ -113,6 +120,27 @@ export default function WeaverPage() {
         <SiteHeader />
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
           <h1 className="font-display text-4xl text-primary">Weaver workspace</h1>
+
+          {earnings && (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Products</p>
+                <p className="mt-1 font-display text-3xl text-primary"><AnimatedCounter value={earnings.totalProducts} /></p>
+              </div>
+              <div className="rounded-md border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Completed</p>
+                <p className="mt-1 font-display text-3xl text-teal"><AnimatedCounter value={earnings.completedCount} /></p>
+              </div>
+              <div className="rounded-md border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Listed Value</p>
+                <p className="mt-1 font-display text-3xl text-gold">₹<AnimatedCounter value={earnings.listedValue} /></p>
+              </div>
+              <div className="rounded-md border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Sold Revenue</p>
+                <p className="mt-1 font-display text-3xl text-madder">₹<AnimatedCounter value={earnings.soldValue} /></p>
+              </div>
+            </div>
+          )}
 
           <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.4fr]">
             <form onSubmit={submit} className="h-fit rounded-md border border-border bg-card p-6">
