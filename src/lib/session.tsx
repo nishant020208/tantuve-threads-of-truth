@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 
-export type AppRole = "weaver" | "admin" | "retailer";
+export type AppRole = "weaver" | "admin" | "retailer" | "coop";
 
 export const roleHome: Record<AppRole, string> = {
   weaver: "/weaver",
   admin: "/admin",
   retailer: "/retailer",
+  coop: "/coop",
 };
 
 interface SessionUser {

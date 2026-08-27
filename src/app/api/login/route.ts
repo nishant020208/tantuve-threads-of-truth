@@ -130,6 +130,23 @@ export async function POST(req: NextRequest) {
       } catch {
         // request_status column might not exist — allow login
       }
+    } else if (role === "coop") {
+      // Co-op officers are pre-approved via whitelist
+      try {
+        const { data: wl } = await client
+          .from("whitelist_requests")
+          .select("status")
+          .eq("identifier", email)
+          .eq("requested_role", "coop")
+          .eq("status", "approved")
+          .limit(1)
+          .single();
+        if (!wl) {
+          return NextResponse.json({ detail: "Co-op officer access not approved" }, { status: 403 });
+        }
+      } catch {
+        // whitelist table may not exist — allow if profile exists
+      }
     }
 
     // Create JWT
