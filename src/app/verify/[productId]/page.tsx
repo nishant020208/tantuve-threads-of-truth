@@ -103,7 +103,7 @@ export default function VerifyPage() {
     );
   }
 
-  const { product, entries, weaver, gi, ipfsCid, ipfsUrl, ipfsVerified } = data;
+  const { product, entries, weaver, gi, ipfsCid, ipfsUrl, ipfsVerified, ipfsDegraded, scanAnomaly, scanAnomalyDetail, firstScanClaimed, firstScanInfo } = data;
   const finalResult = browserResult;
 
   const handleDownload = async () => {
@@ -200,15 +200,40 @@ export default function VerifyPage() {
           {/* IPFS verification badge */}
           {ipfsCid && (
             <div className={`mt-3 flex items-center gap-2 rounded-md border p-3 text-xs sm:text-sm ${
-              ipfsVerified ? "border-teal/50 bg-teal/5 text-teal" : "border-gold/50 bg-gold/5 text-gold"
+              ipfsVerified ? "border-teal/50 bg-teal/5 text-teal" : ipfsDegraded ? "border-orange-500/50 bg-orange-500/5 text-orange-500" : "border-gold/50 bg-gold/5 text-gold"
             }`}>
               <ExternalLink className="h-4 w-4 shrink-0" />
               <span className="truncate">
-                {ipfsVerified ? "IPFS anchor verified" : "IPFS anchor pending verification"}
+                {ipfsVerified ? "IPFS anchor verified" : ipfsDegraded ? "IPFS anchor verification temporarily degraded" : "IPFS anchor pending verification"}
               </span>
               <a href={ipfsUrl} target="_blank" rel="noopener" className="ml-auto shrink-0 underline text-xs">
                 View on IPFS →
               </a>
+            </div>
+          )}
+
+          {/* Scan anomaly warning */}
+          {scanAnomaly && (
+            <div className="mt-3 flex items-start gap-2 rounded-md border border-madder/50 bg-madder/5 p-3 text-xs sm:text-sm text-madder">
+              <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Possible tag clone detected</p>
+                <p className="mt-1 text-madder/80">
+                  This tag has been scanned {scanAnomalyDetail} — it may have been cloned.
+                  Report if you believe this is a fake.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* First-scan-wins notice */}
+          {firstScanClaimed && firstScanInfo?.claimedAt && (
+            <div className="mt-3 flex items-center gap-2 rounded-md border border-gold/50 bg-gold/5 p-3 text-xs sm:text-sm text-gold">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
+              <span>
+                This tag was first claimed on {new Date(firstScanInfo.claimedAt).toLocaleDateString()}.
+                Subsequent scans confirm the same product.
+              </span>
             </div>
           )}
 

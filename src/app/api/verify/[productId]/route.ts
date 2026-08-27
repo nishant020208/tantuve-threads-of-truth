@@ -22,7 +22,7 @@ function canonicalPayload(input: {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ productId: string }> },
 ) {
   try {
@@ -84,15 +84,67 @@ export async function GET(
       }
     }
 
-    // Log scan
+    // Log scan with metadata (graceful degradation if columns missing)
+    const scanIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("x-real-ip") || "unknown";
+    const scanUa = req.headers.get("user-agent") || "unknown";
+    // Basic device fingerprint: hash of UA (lightweight, no client-side needed)
+    const deviceHash = scanUa.length > 20 ? scanUa.slice(0, 20) : scanUa;
+
     try {
-      await client.from("scans").insert({ product_id: productId });
-    } catch { /* ignore scan logging errors */ }
+      await client.from("scans").insert({
+        product_id: productId,
+        ip_address: scanIp,
+        user_agent: scanUa,
+        device_fingerprint: deviceHash,
+        viewer_role: null, // anonymous consumer by default
+      });
+    } catch {
+      // Columns may not exist yet — fall back to basic insert
+      try {
+        await client.from("scans").insert({ product_id: productId });
+      } catch { /* ignore */ }
+    }
 
     // Get scan count
     const { count: scanCount } = await client
       .from("scans").select("id", { count: "exact", head: true })
       .eq("product_id", productId);
+
+    // Anomaly detection: scans in last 24h from distinct locations
+    let scanAnomaly = false;
+    let scanAnomalyDetail = "";
+    try {
+      const twentyFourHoursAgo = new Date(Date.now() - 86400000).toISOString();
+      const { data: recentScans } = await client
+        .from("scans")
+        .select("ip_address, device_fingerprint")
+        .eq("product_id", productId)
+        .gte("created_at", twentyFourHoursAgo);
+
+      if (recentScans && recentScans.length > 10) {
+        const distinctIps = new Set(recentScans.map((s: any) => s.ip_address).filter(Boolean));
+        if (distinctIps.size >= 5) {
+          scanAnomaly = true;
+          scanAnomalyDetail = `${recentScans.length} scans from ${distinctIps.size} locations in 24h`;
+        }
+      }
+    } catch { /* columns may not exist */ }
+
+    // First-scan-wins: check if tag has been claimed
+    let firstScanClaimed = false;
+    let firstScanInfo: { claimedAt: string | null; scanId: string | null } = { claimedAt: null, scanId: null };
+    try {
+      const { data: prod } = await client
+        .from("products")
+        .select("first_scan_claimed_at, first_scan_id")
+        .eq("id", productId)
+        .single();
+      if (prod?.first_scan_claimed_at) {
+        firstScanClaimed = true;
+        firstScanInfo = { claimedAt: prod.first_scan_claimed_at, scanId: prod.first_scan_id };
+      }
+    } catch { /* column may not exist */ }
 
     // Real IPFS verification — fetch pinned content and compare
     let ipfsVerified = false;
@@ -130,6 +182,10 @@ export async function GET(
       weaver,
       gi,
       originStory: null,
+      scanAnomaly,
+      scanAnomalyDetail,
+      firstScanClaimed,
+      firstScanInfo,
       ipfsCid: product.ipfs_cid || null,
       ipfsUrl: product.ipfs_cid
         ? `https://gateway.pinata.cloud/ipfs/${product.ipfs_cid}`
