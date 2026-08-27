@@ -18,7 +18,7 @@ import type { Retailer, Weaver, Product } from "@/lib/api";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk">("dashboard");
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
@@ -36,9 +36,9 @@ export default function AdminPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist"] as const).map((t) => (
+            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
-                {t === "spot-checks" ? "Spot Checks" : t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === "spot-checks" ? "Spot Checks" : t === "risk" ? "Risk Scores" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
             ))}
           </div>
@@ -52,6 +52,7 @@ export default function AdminPage() {
           {tab === "flagged" && <FlaggedEntries />}
           {tab === "spot-checks" && <SpotChecks />}
           {tab === "whitelist" && <WhitelistManager />}
+          {tab === "risk" && <RiskScores />}
         </div>
       </div>
       <SiteFooter />
@@ -389,3 +390,63 @@ function RegistryManager() {
     </div>
   );
 }
+
+
+function RiskScores() {
+  const { data: scores, isLoading } = useQuery({ queryKey: ["admin-risk-scores"], queryFn: adminApi.riskScores });
+
+  const riskColor = (level: string) => {
+    switch (level) {
+      case "critical": return "text-madder bg-madder/10 border-madder/30";
+      case "high": return "text-orange-500 bg-orange-500/10 border-orange-500/30";
+      case "medium": return "text-gold bg-gold/10 border-gold/30";
+      default: return "text-teal bg-teal/10 border-teal/30";
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Counterfeit risk scoring by craft/region. Based on dispute rates and flagged plausibility rates (not raw counts).
+      </p>
+      {isLoading ? (
+        <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-md border border-border bg-card" />)}</div>
+      ) : !scores || scores.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No risk data available.</p>
+      ) : (
+        <div className="space-y-3">
+          {scores.map((s: any, i: number) => (
+            <div key={i} className="rounded-md border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-primary">{s.craft_type}</h3>
+                  <p className="text-xs text-muted-foreground">{s.region}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${riskColor(s.riskLevel)}`}>
+                    {s.riskLevel} ({s.riskScore})
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-4 text-xs text-muted-foreground">
+                <div><span className="font-medium text-primary">{s.totalProducts}</span> products</div>
+                <div><span className="font-medium text-primary">{s.disputedProducts}</span> disputed ({s.disputeRate}%)</div>
+                <div><span className="font-medium text-primary">{s.flaggedProducts}</span> flagged ({s.flaggedRate}%)</div>
+                <div><span className="font-medium text-primary">{s.totalFlaggedEntries}</span> flagged entries</div>
+              </div>
+              {s.disputes.length > 0 && (
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-xs text-muted-foreground mb-1">Active disputes:</p>
+                  {s.disputes.map((d: any, j: number) => (
+                    <p key={j} className="text-xs text-madder">{d.product_id}: {d.reason} ({d.status})</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+

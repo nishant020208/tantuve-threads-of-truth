@@ -203,6 +203,7 @@ export const adminApi = {
   retailers: (status?: string) => apiFetch<Retailer[]>(`/admin/retailers${status ? `?status=${status}` : ""}`),
   approveRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/approve`, { method: "POST" }),
   rejectRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/reject`, { method: "POST" }),
+  riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
 };
 
 export const retailerApi = {
@@ -231,7 +232,6 @@ export const publicApi = {
     apiFetch<any>("/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
   mapData: () => apiFetch<any[]>("/map-data"),
   weaversLeaderboard: () => apiFetch<{ weavers: any[]; spotlight: any; totalWeavers: number }>("/weavers-leaderboard"),
-  riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
   smsSimulator: (data: { phone: string; message: string }) =>
     apiFetch<any>("/sms-simulator", { method: "POST", body: JSON.stringify(data) }),
 };
