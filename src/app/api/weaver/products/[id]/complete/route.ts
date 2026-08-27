@@ -76,6 +76,11 @@ export async function POST(
     updateData.spot_check_status = spotCheckSelected ? "pending" : null;
   } catch { /* ignore */ }
 
+  // Store backup of pinned content in Supabase for resilience
+  try {
+    updateData.pinned_content_backup = record;
+  } catch { /* column may not exist */ }
+
   const { error } = await client
     .from("products")
     .update(updateData)

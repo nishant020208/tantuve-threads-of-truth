@@ -148,6 +148,7 @@ export async function GET(
 
     // Real IPFS verification — fetch pinned content and compare
     let ipfsVerified = false;
+    let ipfsDegraded = false;
     let ipfsContent: Record<string, unknown> | null = null;
     if (product.ipfs_cid) {
       try {
@@ -171,8 +172,28 @@ export async function GET(
           }
         }
       } catch {
-        // IPFS gateway timeout or error — verification degraded
-        ipfsVerified = false;
+        // IPFS gateway timeout — try Supabase backup
+        try {
+          const { data: backupProd } = await client
+            .from("products")
+            .select("pinned_content_backup")
+            .eq("id", productId)
+            .single();
+          if (backupProd?.pinned_content_backup) {
+            ipfsContent = backupProd.pinned_content_backup;
+            const pinnedLatestHash = (ipfsContent as any)?.latest_hash;
+            const pinnedChainLength = (ipfsContent as any)?.chain_length;
+            if (pinnedLatestHash && verification.finalHash) {
+              ipfsVerified = pinnedLatestHash === verification.finalHash;
+            }
+            if (pinnedChainLength && entries) {
+              ipfsVerified = ipfsVerified && pinnedChainLength === entries.length;
+            }
+            // Mark as degraded — backup used, not independent IPFS verification
+            ipfsDegraded = !ipfsVerified;
+          }
+        } catch { /* backup column may not exist */ }
+        if (!ipfsVerified) ipfsDegraded = true;
       }
     }
 
