@@ -358,6 +358,17 @@ export default function VerifyPage() {
             </Button>
           </div>
 
+          {/* Legal disclaimer */}
+          <div className="mt-8 rounded-md border border-border bg-background/50 p-4">
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              This is a timestamped, tamper-evident record of origin claims — not an official GI certification.
+              For authoritative verification, consult the{" "}
+              <a href="https://ipindiaonline.gov.in/girsearch/faces/pages/public/searchform.xhtml" target="_blank" rel="noopener" className="underline hover:text-primary">
+                DPIIT GI Registry
+              </a>.
+            </p>
+          </div>
+
           {/* Dispute form */}
           <div className="mt-10 rounded-md border border-border bg-card p-5">
             <h3 className="font-display text-lg text-primary">
