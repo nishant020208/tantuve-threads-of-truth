@@ -204,6 +204,8 @@ export const adminApi = {
   approveRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/approve`, { method: "POST" }),
   rejectRetailer: (id: string) => apiFetch<{ success: boolean }>(`/admin/retailers/${id}/reject`, { method: "POST" }),
   riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
+  scanAnomalies: () => apiFetch<any[]>("/admin/scan-anomalies"),
+  scanHistory: (productId: string) => apiFetch<{ scans: any[]; stats: any }>(`/admin/scan-history?product_id=${productId}`),
 };
 
 export const retailerApi = {

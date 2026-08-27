@@ -18,7 +18,7 @@ import type { Retailer, Weaver, Product } from "@/lib/api";
 
 export default function AdminPage() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk" | "scan-anomalies">("dashboard");
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
@@ -36,9 +36,9 @@ export default function AdminPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk"] as const).map((t) => (
+            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk", "scan-anomalies"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
-                {t === "spot-checks" ? "Spot Checks" : t === "risk" ? "Risk Scores" : t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === "spot-checks" ? "Spot Checks" : t === "risk" ? "Risk Scores" : t === "scan-anomalies" ? "Scan Anomalies" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
             ))}
           </div>
@@ -53,6 +53,7 @@ export default function AdminPage() {
           {tab === "spot-checks" && <SpotChecks />}
           {tab === "whitelist" && <WhitelistManager />}
           {tab === "risk" && <RiskScores />}
+          {tab === "scan-anomalies" && <ScanAnomalies />}
         </div>
       </div>
       <SiteFooter />
@@ -442,6 +443,56 @@ function RiskScores() {
                   ))}
                 </div>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function ScanAnomalies() {
+  const { data: anomalies, isLoading } = useQuery({ queryKey: ["admin-scan-anomalies"], queryFn: adminApi.scanAnomalies });
+
+  const riskColor = (level: string) => {
+    switch (level) {
+      case "critical": return "text-madder bg-madder/10 border-madder/30";
+      case "high": return "text-orange-500 bg-orange-500/10 border-orange-500/30";
+      default: return "text-gold bg-gold/10 border-gold/30";
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Products with suspicious scan patterns — high scan count from many distinct locations in 24h may indicate cloned tags.
+      </p>
+      {isLoading ? (
+        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-md border border-border bg-card" />)}</div>
+      ) : !anomalies || anomalies.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No scan anomalies detected.</p>
+      ) : (
+        <div className="space-y-3">
+          {anomalies.map((a: any) => (
+            <div key={a.product_id} className="rounded-md border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-primary">{a.title || a.product_id}</h3>
+                  <p className="text-xs text-muted-foreground">{a.craft_type} · {a.product_id}</p>
+                </div>
+                <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${riskColor(a.risk_level)}`}>
+                  {a.risk_level}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-4 text-xs text-muted-foreground">
+                <div><span className="font-medium text-primary">{a.scan_count_24h}</span> scans in 24h</div>
+                <div><span className="font-medium text-primary">{a.distinct_ips_24h}</span> distinct IPs</div>
+                <div>Last: {a.last_scan ? new Date(a.last_scan).toLocaleString() : "n/a"}</div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <a href={"/verify/" + a.product_id} target="_blank" rel="noopener" className="text-xs text-madder hover:underline">View verify page →</a>
+              </div>
             </div>
           ))}
         </div>
