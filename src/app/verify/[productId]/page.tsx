@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldAlert, Loader2, FileDown, Flag, ExternalLink } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Loader2, FileDown, Flag, ExternalLink, Share2 } from "lucide-react";
 import { VerifyReveal } from "@/components/verify-reveal";
 import { VerifySkeleton } from "@/components/skeleton";
 import { toast } from "sonner";
@@ -303,6 +303,32 @@ export default function VerifyPage() {
                   Print report
                 </>
               )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/verify/" + (params.productId as string) + "/share", { method: "POST" });
+                  const data = await res.json();
+                  if (navigator.share) {
+                    await navigator.share({ title: data.product?.title || "Tantuve", text: data.copyText, url: data.shareUrl });
+                  } else {
+                    await navigator.clipboard.writeText(data.copyText);
+                    toast.success("Link copied to clipboard!");
+                  }
+                } catch {
+                  toast.error("Could not share");
+                }
+              }}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+            <Button asChild variant="outline">
+              <a href={"/verify/" + (params.productId as string) + "/card"} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Provenance card
+              </a>
             </Button>
           </div>
 
