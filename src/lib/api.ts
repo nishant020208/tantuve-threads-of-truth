@@ -230,7 +230,7 @@ export const publicApi = {
   applyRetailer: (data: { email: string; password: string; business_name: string; location: string; contact_email?: string }) =>
     apiFetch<any>("/apply-retailer", { method: "POST", body: JSON.stringify(data) }),
   mapData: () => apiFetch<any[]>("/map-data"),
-  weaversLeaderboard: () => apiFetch<any[]>("/weavers-leaderboard"),
+  weaversLeaderboard: () => apiFetch<{ weavers: any[]; spotlight: any; totalWeavers: number }>("/weavers-leaderboard"),
   riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
   smsSimulator: (data: { phone: string; message: string }) =>
     apiFetch<any>("/sms-simulator", { method: "POST", body: JSON.stringify(data) }),

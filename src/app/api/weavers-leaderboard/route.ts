@@ -1,0 +1,73 @@
+import { NextResponse } from "next/server";
+import { getServerClient } from "@/lib/server-db";
+
+export async function GET() {
+  try {
+    const client = getServerClient();
+
+    const { data: weavers } = await client
+      .from("weavers")
+      .select("id, name, region, craft_type, gi_registered, bio")
+      .eq("gi_registered", true)
+      .eq("status", "approved");
+
+    const { data: products } = await client
+      .from("products")
+      .select("id, weaver_id, status")
+      .in("status", ["completed", "in_retail", "sold"]);
+
+    const { data: disputes } = await client
+      .from("disputes")
+      .select("product_id, status");
+
+    const { data: giRegistry } = await client
+      .from("gi_registry")
+      .select("craft_type, region");
+
+    // Build dispute map by product_id
+    const disputeMap = new Map<string, string>();
+    (disputes || []).forEach((d: any) => disputeMap.set(d.product_id, d.status));
+
+    // Score each weaver
+    const scored = (weavers || []).map((w: any) => {
+      const weaverProducts = (products || []).filter((p: any) => p.weaver_id === w.id);
+      const completedCount = weaverProducts.filter((p: any) => p.status === "completed" || p.status === "in_retail" || p.status === "sold").length;
+      const disputedCount = weaverProducts.filter((p: any) => disputeMap.has(p.id)).length;
+      const resolvedDisputes = weaverProducts.filter((p: any) => {
+        const status = disputeMap.get(p.id);
+        return status === "resolved" || status === "closed";
+      }).length;
+
+      // Score: product count * 10, minus disputes * 5, plus resolved disputes * 2
+      const score = completedCount * 10 - disputedCount * 5 + resolvedDisputes * 2;
+
+      return {
+        id: w.id,
+        name: w.name,
+        region: w.region,
+        craft_type: w.craft_type,
+        gi_registered: w.gi_registered,
+        bio: w.bio,
+        productCount: completedCount,
+        disputeCount: disputedCount,
+        resolvedDisputeCount: resolvedDisputes,
+        score,
+      };
+    });
+
+    // Sort by score descending
+    scored.sort((a: any, b: any) => b.score - a.score);
+
+    // Spotlight = highest score weaver
+    const spotlight = scored.length > 0 ? scored[0] : null;
+
+    return NextResponse.json({
+      weavers: scored,
+      spotlight,
+      totalWeavers: scored.length,
+    });
+  } catch (err: any) {
+    console.error("Leaderboard error:", err);
+    return NextResponse.json({ detail: err.message }, { status: 500 });
+  }
+}
