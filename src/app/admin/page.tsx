@@ -341,8 +341,11 @@ function SpotChecks() {
 function RegistryManager() {
   const qc = useQueryClient();
   const { data: items } = useQuery({ queryKey: ["admin-registry"], queryFn: adminApi.registry });
+  const { data: customFieldsData } = useQuery({ queryKey: ["admin-custom-fields"], queryFn: adminApi.customFields.list });
   const [form, setForm] = useState({ craft_type: "", region: "", official_description: "" });
   const [busy, setBusy] = useState(false);
+  const [editingFields, setEditingFields] = useState<string | null>(null);
+  const [fieldForm, setFieldForm] = useState<Array<{ name: string; label: string; type: string }>>([]);
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -352,10 +355,23 @@ function RegistryManager() {
       toast.success("Registry entry added");
       setForm({ craft_type: "", region: "", official_description: "" });
       await qc.invalidateQueries({ queryKey: ["admin-registry"] });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add");
-    }
+    } catch (err: any) { toast.error(err.message || "Failed"); }
     setBusy(false);
+  };
+
+  const saveCustomFields = async (craftType: string) => {
+    try {
+      await adminApi.customFields.update(craftType, fieldForm);
+      toast.success("Custom fields saved for " + craftType);
+      setEditingFields(null);
+      await qc.invalidateQueries({ queryKey: ["admin-custom-fields"] });
+    } catch (err: any) { toast.error(err.message || "Failed"); }
+  };
+
+  const startEditing = (craftType: string) => {
+    const existing = customFieldsData?.find((c: any) => c.craft_type === craftType)?.custom_fields || [];
+    setFieldForm(existing.length > 0 ? existing : [{ name: "", label: "", type: "text" }]);
+    setEditingFields(craftType);
   };
 
   return (
@@ -363,30 +379,57 @@ function RegistryManager() {
       <form onSubmit={add} className="rounded-md border border-border bg-card p-4">
         <h3 className="font-display text-lg text-primary">Add GI Registry entry</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <Label>Craft type</Label>
-            <Input required value={form.craft_type} onChange={(e) => setForm({ ...form, craft_type: e.target.value })} />
-          </div>
-          <div>
-            <Label>Region</Label>
-            <Input required value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
-          </div>
+          <div><Label>Craft type</Label><Input required value={form.craft_type} onChange={(e) => setForm({ ...form, craft_type: e.target.value })} /></div>
+          <div><Label>Region</Label><Input required value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} /></div>
         </div>
-        <div className="mt-3">
-          <Label>Description</Label>
-          <Textarea rows={2} value={form.official_description} onChange={(e) => setForm({ ...form, official_description: e.target.value })} />
-        </div>
-        <Button type="submit" variant="madder" size="sm" className="mt-3" disabled={busy}>
-          Add entry
-        </Button>
+        <div className="mt-3"><Label>Description</Label><Textarea rows={2} value={form.official_description} onChange={(e) => setForm({ ...form, official_description: e.target.value })} /></div>
+        <Button type="submit" variant="madder" size="sm" className="mt-3" disabled={busy}>Add entry</Button>
       </form>
       <div className="mt-4 space-y-2">
-        {items?.map((r: any) => (
-          <div key={r.id} className="rounded-md border border-border bg-card p-3">
-            <p className="font-medium text-primary">{r.craft_type} · {r.region}</p>
-            {r.official_description && <p className="text-sm text-muted-foreground">{r.official_description}</p>}
-          </div>
-        ))}
+        {items?.map((r: any) => {
+          const cf = customFieldsData?.find((c: any) => c.craft_type === r.craft_type)?.custom_fields;
+          return (
+            <div key={r.craft_type} className="rounded-md border border-border bg-card p-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-primary">{r.craft_type} · {r.region}</p>
+                  {r.official_description && <p className="text-sm text-muted-foreground">{r.official_description}</p>}
+                  {cf && cf.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {cf.map((f: any, i: number) => (
+                        <span key={i} className="rounded bg-gold/10 px-2 py-0.5 text-[10px] text-gold">{f.label} ({f.type})</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button size="sm" variant="outline" onClick={() => startEditing(r.craft_type)}>
+                  {editingFields === r.craft_type ? "Cancel" : "Custom Fields"}
+                </Button>
+              </div>
+              {editingFields === r.craft_type && (
+                <div className="mt-3 rounded border border-gold/30 bg-gold/5 p-3">
+                  <p className="text-xs font-medium text-gold mb-2">Define custom fields for {r.craft_type}</p>
+                  {fieldForm.map((f, i) => (
+                    <div key={i} className="flex gap-2 mb-2">
+                      <Input placeholder="field_name" value={f.name} onChange={(e) => { const u = [...fieldForm]; u[i] = { ...u[i], name: e.target.value }; setFieldForm(u); }} className="flex-1" />
+                      <Input placeholder="Label" value={f.label} onChange={(e) => { const u = [...fieldForm]; u[i] = { ...u[i], label: e.target.value }; setFieldForm(u); }} className="flex-1" />
+                      <select value={f.type} onChange={(e) => { const u = [...fieldForm]; u[i] = { ...u[i], type: e.target.value }; setFieldForm(u); }} className="rounded border border-border bg-background px-2 text-sm">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="select">Select</option>
+                      </select>
+                      <Button size="sm" variant="ghost" onClick={() => setFieldForm(fieldForm.filter((_, idx) => idx !== i))}>×</Button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" variant="outline" onClick={() => setFieldForm([...fieldForm, { name: "", label: "", type: "text" }])}>+ Add field</Button>
+                    <Button size="sm" variant="gold" onClick={() => saveCustomFields(r.craft_type)}>Save fields</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

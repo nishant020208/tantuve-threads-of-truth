@@ -206,6 +206,14 @@ export const adminApi = {
   riskScores: () => apiFetch<any[]>("/admin/risk-scores"),
   scanAnomalies: () => apiFetch<any[]>("/admin/scan-anomalies"),
   scanHistory: (productId: string) => apiFetch<{ scans: any[]; stats: any }>(`/admin/scan-history?product_id=${productId}`),
+  customFields: {
+    list: () => apiFetch<any[]>("/admin/registry/custom-fields"),
+    update: (craft_type: string, custom_fields: any[]) =>
+      apiFetch<{ success: boolean }>("/admin/registry/custom-fields", {
+        method: "POST",
+        body: JSON.stringify({ craft_type, custom_fields }),
+      }),
+  },
 };
 
 export const retailerApi = {
