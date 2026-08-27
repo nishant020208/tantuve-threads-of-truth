@@ -16,6 +16,7 @@ import { QrPanel, useQrDataUrl, verifyUrl } from "@/components/qr-panel";
 import { publicApi } from "@/lib/api";
 import { verifyChain, type ChainEntry } from "@/lib/chain";
 import { downloadCertificate } from "@/lib/certificate";
+import { NfcVerify } from "@/components/nfc-verify";
 
 // Client-side hash chain verification (recomputed in browser)
 function useBrowserVerification(entries: any[]) {
