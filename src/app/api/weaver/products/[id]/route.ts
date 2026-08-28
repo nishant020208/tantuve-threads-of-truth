@@ -23,7 +23,7 @@ export async function GET(
     .from("ledger_entries")
     .select("*")
     .eq("product_id", id)
-    .order("sequence_no");
+    .order("seq");
 
   return NextResponse.json({ ...product, entries: entries || [] });
 }
