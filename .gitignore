@@ -43,6 +43,9 @@ blockchain/.env
 
 .freebuff/
 
+# TypeScript build info
+tsconfig.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
