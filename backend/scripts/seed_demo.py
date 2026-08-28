@@ -1,22 +1,113 @@
 """
-Tantuve Demo Data Seeder — uses Supabase Auth
-Run: cd backend && PYTHONIOENCODING=utf-8 python -m scripts.seed_demo
+Tantuve Demo Data Seeder — self-contained, no backend dependencies.
+Run: cd backend && python -m scripts.seed_demo
 """
 
+import hashlib
+import json
+import os
+import random
 import sys
-import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from dotenv import load_dotenv
+
+# Load .env.local from project root
+env_path = Path(__file__).resolve().parent.parent.parent / ".env.local"
+load_dotenv(env_path)
 
 from supabase import create_client
-from app.core.config import get_settings
-from app.services.chain import compute_entry_hash, generate_product_code, verify_chain
+
+# ─── Hash chain utilities (inlined from chain.ts/chain.py) ───
+
+GENESIS = "GENESIS"
+
+def stable_stringify(value):
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return json.dumps(value)
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, list):
+        return "[" + ",".join(stable_stringify(v) for v in value) + "]"
+    if isinstance(value, dict):
+        items = sorted(value.items())
+        return "{" + ",".join(f"{json.dumps(k)}:{stable_stringify(v)}" for k, v in items) + "}"
+    return json.dumps(value)
+
+
+def canonical_payload(product_id, seq, step_name, step_data, timestamp, previous_entry_hash):
+    try:
+        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        ts = dt.isoformat()
+    except Exception:
+        ts = timestamp
+    parts = [
+        product_id,
+        str(seq),
+        step_name,
+        stable_stringify(step_data),
+        ts,
+        previous_entry_hash or GENESIS,
+    ]
+    return "|".join(parts)
+
+
+def compute_entry_hash(product_id, seq, step_name, step_data, timestamp, previous_entry_hash):
+    payload = canonical_payload(product_id, seq, step_name, step_data, timestamp, previous_entry_hash)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def verify_chain(entries):
+    ordered = sorted(entries, key=lambda e: e["seq"])
+    previous = None
+    for entry in ordered:
+        expected = compute_entry_hash(
+            product_id=entry["product_id"],
+            seq=entry["seq"],
+            step_name=entry["step_name"],
+            step_data=entry.get("step_data"),
+            timestamp=entry["timestamp"],
+            previous_entry_hash=previous,
+        )
+        link_ok = (entry.get("previous_entry_hash") or None) == previous
+        if not link_ok or expected != entry["entry_hash"]:
+            return {"valid": False, "brokenAtSeq": entry["seq"], "finalHash": None}
+        previous = entry["entry_hash"]
+    return {"valid": len(ordered) > 0, "brokenAtSeq": None, "finalHash": previous}
+
+
+ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+def generate_product_code():
+    chars = "".join(random.choice(ALPHABET) for _ in range(8))
+    return f"TNT-{chars[:4]}-{chars[4:]}"
+
+
+# ─── IPFS pinning (inlined) ───
+
+def pin_json(data, name="tantuve-record"):
+    import httpx
+    jwt = os.environ.get("PINATA_JWT")
+    if not jwt:
+        raise RuntimeError("PINATA_JWT not set")
+    resp = httpx.post(
+        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+        json={"pinataContent": data, "pinataMetadata": {"name": name}},
+        headers={"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()["IpfsHash"]
+
+
+# ─── Config ───
 
 DEMO_PASSWORD = "tantu@2008"
-DEFAULT_PHOTO_CID = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
-
 ADMIN_EMAIL = "admin@gmail.com"
 
 WEAVERS = [
@@ -37,39 +128,27 @@ RETAILERS = [
 
 
 def get_client():
-    s = get_settings()
-    return create_client(s.SUPABASE_URL, s.SUPABASE_SERVICE_ROLE_KEY)
+    url = os.environ["SUPABASE_URL"]
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    return create_client(url, key)
 
 
 def create_auth_user(supabase_admin, email, password):
-    """Create a user via Supabase Auth and return the user ID."""
     try:
         resp = supabase_admin.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True,
+            "email": email, "password": password, "email_confirm": True,
         })
         user_id = resp.user.id
         print(f"  + Auth user created: {email} (id={user_id})")
         return user_id
     except Exception as e:
         if "already registered" in str(e).lower() or "already exists" in str(e).lower():
-            # User exists, try to get their ID via list_users
             try:
                 resp = supabase_admin.auth.admin.list_users()
                 for u in resp:
                     if u.email == email:
                         print(f"  - Auth user exists: {email} (id={u.id})")
                         return u.id
-            except Exception as list_err:
-                print(f"  [WARN] list_users failed: {list_err}")
-            # If list_users failed, try getting from profiles by email
-            try:
-                prof = client.table("profiles").select("id").eq("email", email).execute()
-                rows = prof.data if hasattr(prof, "data") else []
-                if rows:
-                    print(f"  - Auth user exists (from profile): {email} (id={rows[0]['id']})")
-                    return rows[0]["id"]
             except Exception:
                 pass
             print(f"  - Auth user exists (ID unknown): {email}")
@@ -79,7 +158,6 @@ def create_auth_user(supabase_admin, email, password):
 
 
 def seed_profile(client, user_id, full_name, email=None):
-    """Create or update a profile."""
     existing = client.table("profiles").select("id").eq("id", user_id).execute()
     rows = existing.data if hasattr(existing, "data") else []
     if not rows:
@@ -89,8 +167,7 @@ def seed_profile(client, user_id, full_name, email=None):
         try:
             client.table("profiles").insert(record).execute()
             print(f"  + Profile: {full_name}")
-        except Exception as e:
-            # Try without email column
+        except Exception:
             try:
                 client.table("profiles").insert({"id": user_id, "full_name": full_name}).execute()
                 print(f"  + Profile (no email col): {full_name}")
@@ -101,7 +178,6 @@ def seed_profile(client, user_id, full_name, email=None):
 
 
 def seed_user_role(client, user_id, role):
-    """Create a user_roles entry."""
     existing = client.table("user_roles").select("id").eq("user_id", user_id).execute()
     rows = existing.data if hasattr(existing, "data") else []
     if not rows:
@@ -128,21 +204,18 @@ def seed_weavers(client, supabase_admin):
         if user_id:
             seed_profile(client, user_id, w["name"], w["email"])
             seed_user_role(client, user_id, "weaver")
-
             existing = client.table("weavers").select("id").eq("user_id", user_id).limit(1).execute()
             rows = existing.data if hasattr(existing, "data") else []
             if not rows:
                 client.table("weavers").insert({
                     "user_id": user_id, "name": w["name"],
                     "craft_type": w["craft_type"], "region": w["region"],
-                    "bio": w["bio"], "gi_registered": True,
-                    "status": "approved",
+                    "bio": w["bio"], "gi_registered": True, "status": "approved",
                 }).execute()
                 print(f"  + Weaver: {w['name']} ({w['craft_type']})")
             else:
                 client.table("weavers").update({"status": "approved", "gi_registered": True}).eq("user_id", user_id).execute()
                 print(f"  - Weaver ensured approved: {w['name']}")
-
             weaver_ids.append({"email": w["email"], "user_id": user_id, "name": w["name"]})
     return weaver_ids
 
@@ -154,15 +227,12 @@ def seed_retailers(client, supabase_admin):
         if user_id:
             seed_profile(client, user_id, r["name"], r["email"])
             seed_user_role(client, user_id, "retailer")
-
             existing = client.table("retailers").select("id").eq("user_id", user_id).limit(1).execute()
             rows = existing.data if hasattr(existing, "data") else []
             if not rows:
-                # Use only columns that exist in the retailers table
                 try:
                     client.table("retailers").insert({
-                        "user_id": user_id, "name": r["name"],
-                        "location": r["location"],
+                        "user_id": user_id, "name": r["name"], "location": r["location"],
                     }).execute()
                     print(f"  + Retailer: {r['name']}")
                 except Exception as e:
@@ -172,14 +242,11 @@ def seed_retailers(client, supabase_admin):
 
 
 def create_product(client, weaver_user_id, weaver_name, title, craft_type, yarn_source, steps_data):
-    from app.services.ipfs import pin_json
-
     code = generate_product_code()
-
     resp = client.table("weavers").select("id, name").eq("user_id", weaver_user_id).limit(1).execute()
     rows = resp.data if hasattr(resp, "data") else []
     if not rows:
-        print(f"    [ERROR] Weaver not found")
+        print("    [ERROR] Weaver not found")
         return None
     weaver_id = rows[0]["id"]
 
@@ -196,7 +263,6 @@ def create_product(client, weaver_user_id, weaver_name, title, craft_type, yarn_
         seq = i + 1
         timestamp = (now - timedelta(hours=len(steps_data) - i)).isoformat()
         entry_hash = compute_entry_hash(code, seq, step["step_name"], step["step_data"], timestamp, previous_hash)
-
         client.table("ledger_entries").insert({
             "product_id": code, "seq": seq, "step_name": step["step_name"],
             "step_data": step["step_data"], "actor": weaver_name,
@@ -210,7 +276,7 @@ def create_product(client, weaver_user_id, weaver_name, title, craft_type, yarn_
     entries = entries_resp.data if hasattr(entries_resp, "data") else []
     verification = verify_chain(entries)
     if not verification["valid"]:
-        print(f"    [ERROR] Chain verification failed")
+        print("    [ERROR] Chain verification failed")
         return None
 
     final_hash = verification["finalHash"]
@@ -235,7 +301,6 @@ def create_product(client, weaver_user_id, weaver_name, title, craft_type, yarn_
         except Exception:
             pass
 
-    import random
     if random.random() < 0.12:
         try:
             client.table("products").update({"spot_check_selected": True, "spot_check_status": "pending"}).eq("id", code).execute()
@@ -283,12 +348,9 @@ def main():
     print("=" * 50)
 
     client = get_client()
+    supabase_admin = get_client()
 
-    # Create admin client for auth operations
-    s = get_settings()
-    supabase_admin = create_client(s.SUPABASE_URL, s.SUPABASE_SERVICE_ROLE_KEY)
-
-    admin_id = seed_admin(client, supabase_admin)
+    seed_admin(client, supabase_admin)
     weaver_ids = seed_weavers(client, supabase_admin)
     seed_retailers(client, supabase_admin)
     if weaver_ids:
