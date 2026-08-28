@@ -31,11 +31,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ detail: `Account creation failed: ${err.message}` }, { status: 500 });
     }
 
-    // Create profile
+    // Create profile with password hash
+    const bcrypt = await import("bcryptjs");
+    const passwordHash = await bcrypt.hash(password, 10);
     await client.from("profiles").upsert({
       id: userId,
       full_name: name,
       email,
+      password_hash: passwordHash,
     });
 
     // Create user_role
