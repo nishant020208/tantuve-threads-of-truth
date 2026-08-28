@@ -1,25 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
-import { sha256Hex, GENESIS } from "@/lib/chain";
-
-function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(",")}}`;
-}
-
-function canonicalPayload(input: {
-  product_id: string; seq: number; step_name: string;
-  step_data: unknown; timestamp: string; previous_entry_hash: string | null;
-}): string {
-  return [
-    input.product_id, String(input.seq), input.step_name,
-    stableStringify(input.step_data), new Date(input.timestamp).toISOString(),
-    input.previous_entry_hash || GENESIS,
-  ].join("|");
-}
+import { sha256Hex, canonicalPayload, GENESIS } from "@/lib/chain";
 
 export async function GET(
   req: NextRequest,
@@ -59,17 +40,19 @@ export async function GET(
       gi = data;
     }
 
-    // Client-side verification will happen in the browser
-    // But we also verify server-side for IPFS comparison
+    // Server-side hash chain verification using canonical payload
     let verification = { valid: false, brokenAtSeq: null as number | null, finalHash: null as string | null };
     if (entries && entries.length > 0) {
       let previous: string | null = null;
       for (const entry of entries) {
         const expected = await sha256Hex(
           canonicalPayload({
-            product_id: entry.product_id, seq: entry.seq,
-            step_name: entry.step_name, step_data: entry.step_data,
-            timestamp: entry.timestamp, previous_entry_hash: previous,
+            product_id: entry.product_id,
+            seq: entry.seq,
+            step_name: entry.step_name,
+            step_data: entry.step_data,
+            timestamp: entry.timestamp,
+            previous_entry_hash: previous,
           }),
         );
         const linkOk = (entry.previous_entry_hash || null) === previous;
@@ -84,11 +67,10 @@ export async function GET(
       }
     }
 
-    // Log scan with metadata (graceful degradation if columns missing)
+    // Log scan with metadata
     const scanIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || req.headers.get("x-real-ip") || "unknown";
     const scanUa = req.headers.get("user-agent") || "unknown";
-    // Basic device fingerprint: hash of UA (lightweight, no client-side needed)
     const deviceHash = scanUa.length > 20 ? scanUa.slice(0, 20) : scanUa;
 
     try {
@@ -97,10 +79,9 @@ export async function GET(
         ip_address: scanIp,
         user_agent: scanUa,
         device_fingerprint: deviceHash,
-        viewer_role: null, // anonymous consumer by default
+        viewer_role: null,
       });
     } catch {
-      // Columns may not exist yet — fall back to basic insert
       try {
         await client.from("scans").insert({ product_id: productId });
       } catch { /* ignore */ }
@@ -111,7 +92,7 @@ export async function GET(
       .from("scans").select("id", { count: "exact", head: true })
       .eq("product_id", productId);
 
-    // Anomaly detection: scans in last 24h from distinct locations
+    // Anomaly detection
     let scanAnomaly = false;
     let scanAnomalyDetail = "";
     try {
@@ -131,7 +112,7 @@ export async function GET(
       }
     } catch { /* columns may not exist */ }
 
-    // First-scan-wins: check if tag has been claimed
+    // First-scan-wins
     let firstScanClaimed = false;
     let firstScanInfo: { claimedAt: string | null; scanId: string | null } = { claimedAt: null, scanId: null };
     try {
@@ -146,7 +127,7 @@ export async function GET(
       }
     } catch { /* column may not exist */ }
 
-    // Real IPFS verification — fetch pinned content and compare
+    // IPFS verification — check both `latest_hash` and `finalHash` keys
     let ipfsVerified = false;
     let ipfsDegraded = false;
     let ipfsContent: Record<string, unknown> | null = null;
@@ -161,11 +142,11 @@ export async function GET(
         clearTimeout(timeout);
         if (ipfsRes.ok) {
           ipfsContent = await ipfsRes.json();
-          // Compare the chain metadata
-          const pinnedLatestHash = (ipfsContent as any)?.latest_hash;
-          const pinnedChainLength = (ipfsContent as any)?.chain_length;
-          if (pinnedLatestHash && verification.finalHash) {
-            ipfsVerified = pinnedLatestHash === verification.finalHash;
+          // Check both possible key names for the final hash
+          const pinnedHash = (ipfsContent as any)?.latest_hash || (ipfsContent as any)?.finalHash;
+          const pinnedChainLength = (ipfsContent as any)?.chain_length || (ipfsContent as any)?.entryCount;
+          if (pinnedHash && verification.finalHash) {
+            ipfsVerified = pinnedHash === verification.finalHash;
           }
           if (pinnedChainLength && entries) {
             ipfsVerified = ipfsVerified && pinnedChainLength === entries.length;
@@ -181,15 +162,14 @@ export async function GET(
             .single();
           if (backupProd?.pinned_content_backup) {
             ipfsContent = backupProd.pinned_content_backup;
-            const pinnedLatestHash = (ipfsContent as any)?.latest_hash;
-            const pinnedChainLength = (ipfsContent as any)?.chain_length;
-            if (pinnedLatestHash && verification.finalHash) {
-              ipfsVerified = pinnedLatestHash === verification.finalHash;
+            const pinnedHash = (ipfsContent as any)?.latest_hash || (ipfsContent as any)?.finalHash;
+            const pinnedChainLength = (ipfsContent as any)?.chain_length || (ipfsContent as any)?.entryCount;
+            if (pinnedHash && verification.finalHash) {
+              ipfsVerified = pinnedHash === verification.finalHash;
             }
             if (pinnedChainLength && entries) {
               ipfsVerified = ipfsVerified && pinnedChainLength === entries.length;
             }
-            // Mark as degraded — backup used, not independent IPFS verification
             ipfsDegraded = !ipfsVerified;
           }
         } catch { /* backup column may not exist */ }
