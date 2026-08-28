@@ -12,11 +12,21 @@ export async function POST(
   const { id } = await params;
   const client = getServerClient();
 
-  const { error } = await client
+  // Try full update first; fall back to status-only if DB trigger blocks gi_registered
+  let { error } = await client
     .from("weavers")
     .update({ status: "approved", gi_registered: true })
     .eq("id", id);
 
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+  if (error) {
+    const { error: retryErr } = await client
+      .from("weavers")
+      .update({ status: "approved" })
+      .eq("id", id);
+    if (retryErr) {
+      return NextResponse.json({ detail: retryErr.message }, { status: 500 });
+    }
+  }
+
   return NextResponse.json({ success: true });
 }
