@@ -23,7 +23,8 @@ export async function POST(
     .select("*")
     .eq("id", productId)
     .single();
-  if (!product) return NextResponse.json({ detail: "Product not found" }, { status: 404 });
+  if (!product)
+    return NextResponse.json({ detail: "Product not found" }, { status: 404 });
 
   const { data: weaver } = await client
     .from("weavers")
@@ -35,6 +36,63 @@ export async function POST(
     return NextResponse.json({ detail: "Not authorized" }, { status: 403 });
   }
 
+  // Photo is MANDATORY — every step must have evidence
+  if (!body.photo_base64) {
+    return NextResponse.json(
+      { detail: "Photo evidence is required for every production step. Upload a photo of the work in progress." },
+      { status: 400 },
+    );
+  }
+
+  // Verify image via Cerebras AI
+  let imageVerification = null;
+  try {
+    const verifyRes = await fetch(
+      `${req.nextUrl.origin}/api/verify-image`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: body.photo_base64,
+          stepName: body.step_name,
+          mimeType: body.photo_mime || "image/jpeg",
+        }),
+      },
+    );
+
+    if (verifyRes.ok) {
+      imageVerification = await verifyRes.json();
+    } else {
+      const err = await verifyRes.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          detail: `Image verification failed: ${err.detail || "Could not verify image authenticity"}. Please upload a real photograph of the production step.`,
+        },
+        { status: 400 },
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { detail: "Image verification service unavailable. Please try again." },
+      { status: 503 },
+    );
+  }
+
+  // Reject AI-generated images
+  if (imageVerification && !imageVerification.verified) {
+    return NextResponse.json(
+      {
+        detail: `Image rejected: ${imageVerification.isAiGenerated ? "AI-generated image detected" : "Image does not appear to be authentic"}. Please upload a real photograph of the actual production step.`,
+        verification: {
+          isAiGenerated: imageVerification.isAiGenerated,
+          description: imageVerification.description,
+          confidence: imageVerification.confidence,
+        },
+      },
+      { status: 400 },
+    );
+  }
+
   // Get next sequence number (column is `seq` in the DB)
   const { data: existing } = await client
     .from("ledger_entries")
@@ -43,7 +101,8 @@ export async function POST(
     .order("seq", { ascending: false })
     .limit(1);
 
-  const nextSeq = existing && existing.length > 0 ? existing[0].seq + 1 : 1;
+  const nextSeq =
+    existing && existing.length > 0 ? existing[0].seq + 1 : 1;
   const now = new Date().toISOString();
 
   // Plausibility check
@@ -58,7 +117,9 @@ export async function POST(
       .limit(1)
       .single();
     if (prev?.timestamp) {
-      const elapsed = (new Date(now).getTime() - new Date(prev.timestamp).getTime()) / 1000;
+      const elapsed =
+        (new Date(now).getTime() - new Date(prev.timestamp).getTime()) /
+        1000;
       if (elapsed < MIN_STEP_DURATION_SECONDS) {
         flagged_plausibility = true;
         const minutes = Math.round(elapsed / 60);
@@ -68,11 +129,50 @@ export async function POST(
   }
 
   // Compute hash chain
-  const prevHash = nextSeq > 1 && existing?.length
-    ? (await client.from("ledger_entries").select("entry_hash").eq("product_id", productId).order("seq", { ascending: false }).limit(1).single()).data?.entry_hash || ""
-    : "";
-  const payload = JSON.stringify({ step_name: body.step_name, step_data: body.step_data, actor: body.actor || user.userId, seq: nextSeq, prev_hash: prevHash, timestamp: now });
+  const prevHash =
+    nextSeq > 1 && existing?.length
+      ? (
+          await client
+            .from("ledger_entries")
+            .select("entry_hash")
+            .eq("product_id", productId)
+            .order("seq", { ascending: false })
+            .limit(1)
+            .single()
+        ).data?.entry_hash || ""
+      : "";
+  const payload = JSON.stringify({
+    step_name: body.step_name,
+    step_data: body.step_data,
+    actor: body.actor || user.userId,
+    seq: nextSeq,
+    prev_hash: prevHash,
+    timestamp: now,
+  });
   const entryHash = sha256(payload);
+
+  // Upload photo to IPFS if provided
+  let photo_ipfs_cid: string | null = null;
+  if (body.photo_base64) {
+    try {
+      const { pinFileToIPFS } = await import("@/lib/server-ipfs");
+      // Convert base64 to Blob
+      const binaryStr = atob(body.photo_base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], {
+        type: body.photo_mime || "image/jpeg",
+      });
+      const file = new File([blob], `step-${body.step_name}-${Date.now()}.jpg`, {
+        type: body.photo_mime || "image/jpeg",
+      });
+      photo_ipfs_cid = await pinFileToIPFS(file);
+    } catch {
+      // IPFS upload failed — continue without it
+    }
+  }
 
   const { data: entry, error } = await client
     .from("ledger_entries")
@@ -81,18 +181,32 @@ export async function POST(
       seq: nextSeq,
       step_name: body.step_name,
       step_data: body.step_data || {},
-      actor: user.userId,
+      actor: body.userId || user.userId,
       previous_entry_hash: prevHash,
       entry_hash: entryHash,
       timestamp: now,
       flagged_plausibility,
       flagged_reason,
-      photo_ipfs_cid: body.photo_ipfs_cid || null,
+      photo_ipfs_cid,
+      image_verified: true,
+      image_verified_at: now,
+      image_verification_result: imageVerification
+        ? JSON.stringify(imageVerification)
+        : null,
     })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+  if (error)
+    return NextResponse.json({ detail: error.message }, { status: 500 });
 
-  return NextResponse.json(entry);
+  return NextResponse.json({
+    ...entry,
+    imageVerification: {
+      verified: true,
+      description: imageVerification?.description,
+      confidence: imageVerification?.confidence,
+      uploadedAt: now,
+    },
+  });
 }
