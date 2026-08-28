@@ -1,14 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
 import { sha256Hex, canonicalPayload, GENESIS } from "@/lib/chain";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ productId: string }> },
 ) {
+  // Rate limit: 30 requests per minute per IP
+  const ip = getClientIp(req);
+  const { allowed, remaining, resetAt } = checkRateLimit(`verify:${ip}`, 30, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { detail: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": "0", "X-RateLimit-Reset": String(Math.ceil(resetAt / 1000)) } },
+    );
+  }
+
   try {
     const { productId } = await params;
     const client = getServerClient();
+
+    const responseHeaders = { "X-RateLimit-Remaining": String(remaining) };
 
     // Get product
     const { data: product } = await client
