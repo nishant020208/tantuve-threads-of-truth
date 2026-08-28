@@ -13,6 +13,14 @@ export async function POST(req: NextRequest) {
 
   if (!body.product_id || !body.reason) {
     return NextResponse.json({ detail: "product_id and reason are required" }, { status: 400 });
+  }  // Validate product exists before inserting (prevents FK violation)
+  const { data: product } = await client
+    .from("products")
+    .select("id")
+    .eq("id", body.product_id)
+    .single();
+  if (!product) {
+    return NextResponse.json({ detail: "Product not found" }, { status: 404 });
   }
 
   const { data, error } = await client
