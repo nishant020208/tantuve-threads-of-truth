@@ -6,7 +6,7 @@ By cryptographically chaining the ledger of the production cycle (from yarn sour
 
 ---
 
-## Table of Contents
+## Tables of Contents
 - [Project Overview](#project-overview)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
