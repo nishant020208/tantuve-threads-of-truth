@@ -7,30 +7,29 @@ export async function GET(req: NextRequest) {
   if (user instanceof NextResponse) return user;
 
   const productId = req.nextUrl.searchParams.get("product_id");
-  if (!productId) {
-    return NextResponse.json({ detail: "product_id required" }, { status: 400 });
-  }
 
   const client = getServerClient();
 
   // Get scans with metadata (graceful degradation)
   let scans: any[] = [];
   try {
-    const { data } = await client
+    let q = client
       .from("scans")
       .select("id, product_id, created_at, ip_address, user_agent, device_fingerprint, viewer_role")
-      .eq("product_id", productId)
       .order("created_at", { ascending: false })
       .limit(100);
+    if (productId) q = q.eq("product_id", productId);
+    const { data } = await q;
     scans = data || [];
   } catch {
     // Fallback: basic scan data only
-    const { data } = await client
+    let q = client
       .from("scans")
       .select("id, product_id, created_at")
-      .eq("product_id", productId)
       .order("created_at", { ascending: false })
       .limit(100);
+    if (productId) q = q.eq("product_id", productId);
+    const { data } = await q;
     scans = data || [];
   }
 
