@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ detail: "Product not found" }, { status: 404 });
   }
 
-  if (product.status !== "completed") {
+  const validStatuses = ["completed", "with_retailer", "in_retail", "sold"];
+  if (!validStatuses.includes(product.status)) {
     return NextResponse.json({ detail: "Only completed products can be counter-signed" }, { status: 400 });
   }
 
