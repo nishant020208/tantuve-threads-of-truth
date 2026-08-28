@@ -17,6 +17,7 @@ import { publicApi } from "@/lib/api";
 import { verifyChain, type ChainEntry } from "@/lib/chain";
 import { downloadCertificate } from "@/lib/certificate";
 import { NfcVerify } from "@/components/nfc-verify";
+import { getProductFromChain, getContractAddress, EXPLORER } from "@/lib/blockchain";
 
 // Client-side hash chain verification (recomputed in browser)
 function useBrowserVerification(entries: any[]) {
@@ -44,6 +45,8 @@ export default function VerifyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [chainData, setChainData] = useState<{ ledgerHash: string; timestamp: number; writer: string; exists: boolean } | null>(null);
+  const [chainLoading, setChainLoading] = useState(false);
   const qr = useQrDataUrl(verifyUrl(productId), 220);
 
   const { data, isLoading, error } = useQuery({
@@ -55,6 +58,16 @@ export default function VerifyPage() {
 
   // Browser-side chain verification
   const browserResult = useBrowserVerification(data?.entries ?? []);
+
+  // Blockchain lookup
+  useEffect(() => {
+    if (!productId || !getContractAddress()) return;
+    setChainLoading(true);
+    getProductFromChain(productId)
+      .then(setChainData)
+      .catch(() => setChainData(null))
+      .finally(() => setChainLoading(false));
+  }, [productId]);
 
   if (isLoading) {
     return (
