@@ -57,7 +57,7 @@ export interface WeaverProduct {
     step_data: Record<string, any>;
     actor: string;
     timestamp: string;
-    photo_base64?: string;
+    photo_base64?: string; photo_mime?: string;
   }>;
 }
 
@@ -76,7 +76,7 @@ export const weaverApi = {
   createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string }) =>
     apiFetch<{ productId: string }>("/weaver/products", { method: "POST", body: JSON.stringify(data) }),
   getProduct: (id: string) => apiFetch<WeaverProduct>(`/weaver/products/${id}`),
-  appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string }) =>
+  appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string; photo_mime?: string }) =>
     apiFetch<AppendStepResponse>(`/weaver/products/${productId}/steps`, { method: "POST", body: JSON.stringify(data) }),
   complete: (productId: string) =>
     apiFetch<CompleteProductResponse>(`/weaver/products/${productId}/complete`, { method: "POST" }),
