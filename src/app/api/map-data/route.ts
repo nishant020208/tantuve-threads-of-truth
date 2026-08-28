@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Approximate lat/lng for GI craft regions (center of region, not precise address)
 const REGION_COORDS: Record<string, { lat: number; lng: number; state: string }> = {
@@ -21,7 +22,12 @@ const REGION_COORDS: Record<string, { lat: number; lng: number; state: string }>
   "Maharashtra": { lat: 19.08, lng: 72.88, state: "Maharashtra" },
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(`map:${ip}`, 60, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ detail: "Too many requests" }, { status: 429 });
+  }
   try {
     const client = getServerClient();
 
