@@ -14,7 +14,7 @@ export type ChainEntry = {
 
 export const GENESIS = "GENESIS";
 
-function stableStringify(value: unknown): string {
+export function stableStringify(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
   const obj = value as Record<string, unknown>;
@@ -41,11 +41,17 @@ export function canonicalPayload(input: {
 }
 
 export async function sha256Hex(text: string): Promise<string> {
-  const bytes = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  // Works in both browser (Web Crypto) and Node.js (crypto module)
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+  // Node.js fallback
+  const { createHash } = await import("crypto");
+  return createHash("sha256").update(text, "utf-8").digest("hex");
 }
 
 export async function computeEntryHash(input: {
