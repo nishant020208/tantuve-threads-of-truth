@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(`marketplace:${ip}`, 60, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ detail: "Too many requests" }, { status: 429 });
+  }
   try {
     const client = getServerClient();
     // Show products that are with a retailer and either listed or with_retailer status
