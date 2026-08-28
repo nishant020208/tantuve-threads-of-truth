@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ detail: `Account creation failed: ${err.message}` }, { status: 500 });
     }
 
-    await client.from("profiles").upsert({ id: userId, full_name: business_name, email });
+    // Store password hash
+    const bcrypt = await import("bcryptjs");
+    const passwordHash = await bcrypt.hash(password, 10);
+    await client.from("profiles").upsert({ id: userId, full_name: business_name, email, password_hash: passwordHash });
     await client.from("user_roles").upsert({ user_id: userId, role: "retailer" });
 
     const { error } = await client.from("retailers").insert({
