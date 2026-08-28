@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { getServerClient } from "@/lib/server-db";
-import { sha256 } from "@/lib/server-utils";
+import { sha256Hex, canonicalPayload, PRODUCTION_STEPS } from "@/lib/chain";
 
 // Minimum expected duration between steps (2 hours in seconds)
 const MIN_STEP_DURATION_SECONDS = 7200;
@@ -28,12 +28,16 @@ export async function POST(
 
   const { data: weaver } = await client
     .from("weavers")
-    .select("id")
+    .select("id, name")
     .eq("user_id", user.userId)
     .limit(1)
     .single();
   if (!weaver || product.weaver_id !== weaver.id) {
     return NextResponse.json({ detail: "Not authorized" }, { status: 403 });
+  }
+
+  if (product.status === "completed") {
+    return NextResponse.json({ detail: "Product is already completed" }, { status: 400 });
   }
 
   // Photo is MANDATORY — every step must have evidence
@@ -93,16 +97,16 @@ export async function POST(
     );
   }
 
-  // Get next sequence number (column is `seq` in the DB)
+  // Get the last entry for hash chaining
   const { data: existing } = await client
     .from("ledger_entries")
-    .select("seq")
+    .select("seq, entry_hash")
     .eq("product_id", productId)
     .order("seq", { ascending: false })
     .limit(1);
 
-  const nextSeq =
-    existing && existing.length > 0 ? existing[0].seq + 1 : 1;
+  const nextSeq = existing && existing.length > 0 ? existing[0].seq + 1 : 1;
+  const previousEntryHash = existing && existing.length > 0 ? existing[0].entry_hash : null;
   const now = new Date().toISOString();
 
   // Plausibility check
@@ -123,40 +127,28 @@ export async function POST(
       if (elapsed < MIN_STEP_DURATION_SECONDS) {
         flagged_plausibility = true;
         const minutes = Math.round(elapsed / 60);
-        flagged_reason = `step logged ${minutes} minute${minutes !== 1 ? "s" : ""} after previous step`;
+        flagged_reason = `step logged ${minutes} minute${minutes !== 1 ? "s" : ""} after previous step (minimum expected: ${MIN_STEP_DURATION_SECONDS / 60} minutes)`;
       }
     }
   }
 
-  // Compute hash chain
-  const prevHash =
-    nextSeq > 1 && existing?.length
-      ? (
-          await client
-            .from("ledger_entries")
-            .select("entry_hash")
-            .eq("product_id", productId)
-            .order("seq", { ascending: false })
-            .limit(1)
-            .single()
-        ).data?.entry_hash || ""
-      : "";
-  const payload = JSON.stringify({
-    step_name: body.step_name,
-    step_data: body.step_data,
-    actor: body.actor || user.userId,
-    seq: nextSeq,
-    prev_hash: prevHash,
-    timestamp: now,
-  });
-  const entryHash = sha256(payload);
+  // Compute hash using the SAME canonical format as chain.ts
+  const entryHash = sha256Hex(
+    canonicalPayload({
+      product_id: productId,
+      seq: nextSeq,
+      step_name: body.step_name,
+      step_data: body.step_data || {},
+      timestamp: now,
+      previous_entry_hash: previousEntryHash,
+    }),
+  );
 
-  // Upload photo to IPFS if provided
+  // Upload photo to IPFS
   let photo_ipfs_cid: string | null = null;
   if (body.photo_base64) {
     try {
       const { pinFileToIPFS } = await import("@/lib/server-ipfs");
-      // Convert base64 to Blob
       const binaryStr = atob(body.photo_base64);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {
@@ -181,8 +173,8 @@ export async function POST(
       seq: nextSeq,
       step_name: body.step_name,
       step_data: body.step_data || {},
-      actor: body.userId || user.userId,
-      previous_entry_hash: prevHash,
+      actor: body.actor || weaver.name || user.userId,
+      previous_entry_hash: previousEntryHash,
       entry_hash: entryHash,
       timestamp: now,
       flagged_plausibility,
@@ -201,12 +193,17 @@ export async function POST(
     return NextResponse.json({ detail: error.message }, { status: 500 });
 
   return NextResponse.json({
-    ...entry,
-    imageVerification: {
-      verified: true,
-      description: imageVerification?.description,
-      confidence: imageVerification?.confidence,
-      uploadedAt: now,
-    },
+    success: true,
+    seq: entry.seq,
+    entry_hash: entryHash,
+    photo_ipfs_cid,
+    imageVerification: imageVerification
+      ? {
+          verified: true,
+          description: imageVerification.description,
+          confidence: imageVerification.confidence,
+          uploadedAt: now,
+        }
+      : null,
   });
 }
