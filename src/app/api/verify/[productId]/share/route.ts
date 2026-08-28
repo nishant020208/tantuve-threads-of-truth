@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ productId: string }> },
-) {
+async function handleShare(productId: string) {
   try {
-    const { productId } = await params;
     const client = getServerClient();
 
     const { data: product } = await client
@@ -52,4 +48,20 @@ export async function POST(
   } catch (err: any) {
     return NextResponse.json({ detail: err.message }, { status: 500 });
   }
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ productId: string }> },
+) {
+  const { productId } = await params;
+  return handleShare(productId);
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ productId: string }> },
+) {
+  const { productId } = await params;
+  return handleShare(productId);
 }
