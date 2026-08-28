@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(`disputes:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ detail: "Too many requests. Please try again later." }, { status: 429 });
+  }
   const client = getServerClient();
   const body = await req.json();
 
