@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerClient } from "@/lib/server-db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { allowed } = checkRateLimit(`apply-weaver:${ip}`, 5, 300_000);
+  if (!allowed) {
+    return NextResponse.json({ detail: "Too many applications. Please try again in 5 minutes." }, { status: 429 });
+  }
   try {
     const body = await req.json();
     const { name, email, password, region, craft_type, bio } = body;
