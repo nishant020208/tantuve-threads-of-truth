@@ -130,12 +130,12 @@ const WEAVER_LINKS = [
 ];
 
 const ADMIN_LINKS = [
-  { href: "/admin", label: "Dashboard", icon: ShieldCheck },
-  { href: "/admin", label: "Weavers", icon: Users },
-  { href: "/admin", label: "Retailers", icon: Store },
-  { href: "/admin", label: "Products", icon: Package },
-  { href: "/admin", label: "Registry", icon: ScrollText },
-  { href: "/admin", label: "Disputes", icon: AlertTriangle },
+  { href: "/admin?tab=dashboard", label: "Dashboard", icon: ShieldCheck },
+  { href: "/admin?tab=weavers", label: "Weavers", icon: Users },
+  { href: "/admin?tab=retailers", label: "Retailers", icon: Store },
+  { href: "/admin?tab=products", label: "Products", icon: Package },
+  { href: "/admin?tab=registry", label: "Registry", icon: ScrollText },
+  { href: "/admin?tab=flagged", label: "Disputes", icon: AlertTriangle },
 ];
 
 const RETAILER_LINKS = [
