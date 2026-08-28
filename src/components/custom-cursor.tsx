@@ -11,18 +11,28 @@ import { useTheme, type ThemeMode } from "@/lib/theme";
 
 const TRAIL_LENGTH = 8;
 
+interface CursorColors {
+  dot: string;
+  dotGlow: string;
+  trail: string;
+  ring: string;
+  size: number;
+  glowRadius: number;
+}
+
 interface Point {
   x: number;
   y: number;
 }
 
-function getThemeColors(theme: ThemeMode) {
+function getThemeColors(theme: ThemeMode): CursorColors {
   switch (theme) {
     case "aesthetic":
       return {
         dot: "#D4A017",
         dotGlow: "rgba(212, 160, 23, 0.45)",
         trail: "rgba(212, 160, 23, 0.3)",
+        ring: "#B8860B",
         size: 12,
         glowRadius: 22,
       };
@@ -40,6 +50,7 @@ function getThemeColors(theme: ThemeMode) {
         dot: "#F0C840",
         dotGlow: "rgba(240, 200, 64, 0.55)",
         trail: "rgba(240, 200, 64, 0.35)",
+        ring: "#F0C840",
         size: 14,
         glowRadius: 30,
       };
@@ -68,18 +79,7 @@ export function CustomCursor() {
     ).matches;
     setIsTouch(!hasHover || prefersReduced);
 
-    // Handle theme changes for cursor colors
-    const handleThemeChange = () => {
-      colorsRef.current = getThemeColors(theme);
-    };
-
-    // Listen for theme changes if using system theme
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', handleThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleThemeChange);
-    };
+    return () => {};
   }, [theme]);
 
   // Store theme colors in a ref so animate() always reads latest
@@ -222,7 +222,7 @@ export function CustomCursor() {
           width: colors.size,
           height: colors.size,
           background: colors.dot,
-          border: (colors as any).ring ? `2px solid ${(colors as any).ring}` : "none",
+          border: colors.ring ? `2px solid ${colors.ring}` : "none",
           boxShadow: `0 0 ${colors.glowRadius * 0.8}px ${colors.dotGlow}, 0 2px 8px rgba(0,0,0,0.3)`,
           opacity: visible ? 1 : 0,
           transition: "opacity 0.3s ease",
