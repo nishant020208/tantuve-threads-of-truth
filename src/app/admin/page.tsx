@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,29 @@ import { AnimatedCounter } from "@/components/animated-counter";
 import { WhitelistManager } from "@/components/whitelist-manager";
 import type { Retailer, Weaver, Product } from "@/lib/api";
 
+type AdminTab = "dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk" | "scan-anomalies";
+const VALID_TABS: AdminTab[] = ["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk", "scan-anomalies"];
+
+import { Suspense } from "react";
+
 export default function AdminPage() {
+  return (
+    <Suspense fallback={<Shell>Loading…</Shell>}>
+      <AdminPageInner />
+    </Suspense>
+  );
+}
+
+function AdminPageInner() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk" | "scan-anomalies">("dashboard");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = (searchParams.get("tab") || "dashboard") as AdminTab;
+  const tab = VALID_TABS.includes(urlTab) ? urlTab : "dashboard";
+
+  const setTab = useCallback((t: AdminTab) => {
+    router.replace(`/admin?tab=${t}`);
+  }, [router]);
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "admin")
