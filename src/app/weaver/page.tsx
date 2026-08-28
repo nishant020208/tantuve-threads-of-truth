@@ -16,6 +16,7 @@ import { PRODUCTION_STEPS } from "@/lib/chain";
 import { AnimatedCounter } from "@/components/animated-counter";
 
 import { motion } from "motion/react";
+import { registerProductOnChain, getContractAddress } from "@/lib/blockchain";
 
 export default function WeaverPage() {
   const { session, role, loading } = useSession();
@@ -63,6 +64,8 @@ export default function WeaverPage() {
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [stepBusy, setStepBusy] = useState<string | null>(null);
+  const [stepStatus, setStepStatus] = useState<Record<string, { uploading: boolean; verifying: boolean }>>({});
+  const [chainBusy, setChainBusy] = useState(false);
 
   const logStep = async (productId: string, stepKey: string, label: string) => {
     if (!photoFile) {
@@ -98,6 +101,21 @@ export default function WeaverPage() {
       toast.error(err.message || "Could not log step");
     }
     setStepBusy(null);
+  };
+
+  const registerOnChain = async (productId: string, ledgerHash: string) => {
+    if (!getContractAddress()) {
+      toast.error("Smart contract not deployed yet");
+      return;
+    }
+    setChainBusy(true);
+    try {
+      const result = await registerProductOnChain(productId, ledgerHash);
+      toast.success("Registered on blockchain! Tx: " + result.txHash.slice(0, 10) + "...");
+    } catch (err: any) {
+      toast.error(err.message || "Blockchain registration failed");
+    }
+    setChainBusy(false);
   };
 
   const completeProduct = async (productId: string) => {
