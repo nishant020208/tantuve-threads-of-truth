@@ -65,6 +65,10 @@ export default function WeaverPage() {
   const [stepBusy, setStepBusy] = useState<string | null>(null);
 
   const logStep = async (productId: string, stepKey: string, label: string) => {
+    if (!photoFile) {
+      toast.error("Photo is required. Upload a photo of the production step before logging.");
+      return;
+    }
     setStepBusy(stepKey);
     try {
       let photo_base64: string | undefined;
@@ -85,6 +89,7 @@ export default function WeaverPage() {
         step_data: { note: `${label} completed`, recorded_by: session.full_name || "weaver" },
         actor: session.full_name || "weaver",
         photo_base64,
+        photo_mime: photoFile.type || "image/jpeg",
       });
       toast.success(`${label} added to the ledger${photo_base64 ? " (with photo evidence)" : ""}`);
       setPhotoFile(null);
@@ -194,21 +199,25 @@ export default function WeaverPage() {
                     {p.status !== "completed" && (
                       <>
                         <div className="mt-4">
-                          <Label className="text-xs text-muted-foreground">Photo evidence (optional, strongly recommended)</Label>
+                          <Label className="text-xs text-muted-foreground">Photo evidence (required for every step)</Label>
                           <input
                             type="file"
                             accept="image/*"
+                            required
                             className="mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-sm file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground hover:file:bg-primary/90"
                             onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
                           />
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
+                          {!photoFile && (
+                            <p className="text-xs text-amber-600">Upload a photo above, then click a step to log it with evidence.</p>
+                          )}
                           {PRODUCTION_STEPS.map((s) => (
                             <Button
                               key={s.key}
                               size="sm"
                               variant={logged.has(s.key) ? "secondary" : "outline"}
-                              disabled={logged.has(s.key) || stepBusy === s.key}
+                              disabled={logged.has(s.key) || stepBusy === s.key || !photoFile}
                               onClick={() => logStep(p.id, s.key, s.label)}
                             >
                               {stepBusy === s.key ? "Uploading…" : logged.has(s.key) ? "✓ " + s.label : "Log " + s.label}
