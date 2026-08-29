@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { toast } from "sonner";
 import { QrCode, X } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
@@ -14,9 +15,24 @@ import { useSession } from "@/lib/session";
 import { retailerApi } from "@/lib/api";
 import { QrScanner } from "@/components/qr-scanner";
 
+type RetailerTab = "receive" | "inventory";
+
 export default function RetailerPage() {
+  return (
+    <Suspense fallback={<Shell>Loading…</Shell>}>
+      <RetailerPageInner />
+    </Suspense>
+  );
+}
+
+function RetailerPageInner() {
   const { session, role, loading } = useSession();
-  const [tab, setTab] = useState<"receive" | "inventory">("receive");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = (searchParams.get("tab") || "receive") as RetailerTab;
+  const tab: RetailerTab = urlTab === "inventory" ? "inventory" : "receive";
+
+  const setTab = (t: RetailerTab) => router.replace(`/retailer?tab=${t}`);
 
   if (loading) return <Shell>Loading…</Shell>;
   if (!session || role !== "retailer")
