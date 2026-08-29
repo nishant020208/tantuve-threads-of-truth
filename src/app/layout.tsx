@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { MobileDock } from "@/components/mobile-dock";
 import { Providers } from "./providers";
 import { AnimatePresence } from "motion/react";
 
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <AnimatePresence mode="wait">
             {children}
+        <MobileDock />
           </AnimatePresence>
         </Providers>
       </body>
