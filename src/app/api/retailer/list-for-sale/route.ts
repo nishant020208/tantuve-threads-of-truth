@@ -41,6 +41,11 @@ export async function POST(req: NextRequest) {
       .eq("retailer_id", retailer.id);
 
     if (error) return NextResponse.json({ detail: error.message }, { status: 500 });
+
+    // Also update the product's retail_listed_price for fair-wage transparency
+    if (body.price !== undefined) {
+      await client.from("products").update({ retail_listed_price: body.price, listed: body.listed }).eq("id", body.product_id);
+    }
   } catch {
     return NextResponse.json({ detail: "Inventory system not yet available" }, { status: 503 });
   }

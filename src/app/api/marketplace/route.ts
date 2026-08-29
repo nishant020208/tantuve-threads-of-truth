@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     // Show products that are with a retailer and either listed or with_retailer status
     const { data } = await client
       .from("products")
-      .select("id, title, craft_type, photo_url, price, status, weavers(name, region, gi_registered), retailers(name, location)")
+      .select("id, title, craft_type, photo_url, price, retail_listed_price, status, weavers(name, region, gi_registered), retailers(name, location)")
       .in("status", ["with_retailer", "completed"])
       .eq("listed", true)
       .order("created_at", { ascending: false });
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     if (!data || data.length === 0) {
       const { data: fallback } = await client
         .from("products")
-        .select("id, title, craft_type, photo_url, price, status, weavers(name, region, gi_registered), retailers(name, location)")
+        .select("id, title, craft_type, photo_url, price, retail_listed_price, status, weavers(name, region, gi_registered), retailers(name, location)")
         .eq("status", "with_retailer")
         .order("created_at", { ascending: false });
       return NextResponse.json(fallback || []);
