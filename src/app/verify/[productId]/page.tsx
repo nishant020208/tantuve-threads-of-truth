@@ -47,6 +47,9 @@ export default function VerifyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [inquiryMsg, setInquiryMsg] = useState("");
+  const [inquiryContact, setInquiryContact] = useState("");
+  const [inquiryBusy, setInquiryBusy] = useState(false);
   const { lang } = useSession();
   const [chainData, setChainData] = useState<{ ledgerHash: string; timestamp: number; writer: string; exists: boolean } | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
