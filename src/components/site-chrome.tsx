@@ -126,7 +126,7 @@ const PUBLIC_LINKS = [
 
 const WEAVER_LINKS = [
   { href: "/weaver", label: "My Products", icon: Package },
-  { href: "/weaver", label: "New Product", icon: PlusCircle },
+  { href: "/weaver#new", label: "New Product", icon: PlusCircle },
 ];
 
 const ADMIN_LINKS = [
@@ -135,12 +135,12 @@ const ADMIN_LINKS = [
   { href: "/admin?tab=retailers", label: "Retailers", icon: Store },
   { href: "/admin?tab=products", label: "Products", icon: Package },
   { href: "/admin?tab=registry", label: "Registry", icon: ScrollText },
-  { href: "/admin?tab=flagged", label: "Disputes", icon: AlertTriangle },
+  { href: "/admin?tab=disputes", label: "Disputes", icon: AlertTriangle },
 ];
 
 const RETAILER_LINKS = [
-  { href: "/retailer", label: "Inventory", icon: FileText },
-  { href: "/retailer", label: "Receive", icon: ScanBarcode },
+  { href: "/retailer?tab=inventory", label: "Inventory", icon: FileText },
+  { href: "/retailer?tab=receive", label: "Receive", icon: ScanBarcode },
 ];
 
 /* ─── Site Header ─── */
