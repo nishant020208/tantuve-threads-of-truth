@@ -21,6 +21,18 @@ export async function POST(req: NextRequest) {
     .single();
   if (!retailer) return NextResponse.json({ detail: "Retailer profile not found" }, { status: 404 });
 
+  // Validate product exists in this retailer's inventory
+  const { data: invItem } = await client
+    .from("retailer_inventory")
+    .select("product_id")
+    .eq("product_id", body.product_id)
+    .eq("retailer_id", retailer.id)
+    .limit(1)
+    .single();
+  if (!invItem) {
+    return NextResponse.json({ detail: "Product not found in your inventory" }, { status: 404 });
+  }
+
   try {
     const { error } = await client
       .from("retailer_inventory")
