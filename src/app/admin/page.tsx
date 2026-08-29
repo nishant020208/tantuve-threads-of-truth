@@ -17,8 +17,8 @@ import { AnimatedCounter } from "@/components/animated-counter";
 import { WhitelistManager } from "@/components/whitelist-manager";
 import type { Retailer, Weaver, Product } from "@/lib/api";
 
-type AdminTab = "dashboard" | "weavers" | "retailers" | "products" | "registry" | "flagged" | "spot-checks" | "whitelist" | "risk" | "scan-anomalies";
-const VALID_TABS: AdminTab[] = ["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk", "scan-anomalies"];
+type AdminTab = "dashboard" | "weavers" | "retailers" | "products" | "registry" | "disputes" | "flagged" | "spot-checks" | "whitelist" | "risk" | "scan-anomalies";
+const VALID_TABS: AdminTab[] = ["dashboard", "weavers", "retailers", "products", "registry", "disputes", "flagged", "spot-checks", "whitelist", "risk", "scan-anomalies"];
 
 import { Suspense } from "react";
 
@@ -57,7 +57,7 @@ function AdminPageInner() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl text-primary">GI Authority</h1>
           <div className="ml-auto flex gap-1">
-            {(["dashboard", "weavers", "retailers", "products", "registry", "flagged", "spot-checks", "whitelist", "risk", "scan-anomalies"] as const).map((t) => (
+            {(["dashboard", "weavers", "retailers", "products", "registry", "disputes", "spot-checks", "whitelist", "risk", "scan-anomalies"] as const).map((t) => (
               <Button key={t} size="sm" variant={tab === t ? "madder" : "outline"} onClick={() => setTab(t)}>
                 {t === "spot-checks" ? "Spot Checks" : t === "risk" ? "Risk Scores" : t === "scan-anomalies" ? "Scan Anomalies" : t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
@@ -70,6 +70,8 @@ function AdminPageInner() {
           {tab === "retailers" && <RetailerManager />}
           {tab === "products" && <ProductList />}
           {tab === "registry" && <RegistryManager />}
+          {tab === "disputes" && <DisputesManager />}
+          {tab === "disputes" && <DisputesManager />}
           {tab === "flagged" && <FlaggedEntries />}
           {tab === "spot-checks" && <SpotChecks />}
           {tab === "whitelist" && <WhitelistManager />}
@@ -269,6 +271,50 @@ function ProductList() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function DisputesManager() {
+  const qc = useQueryClient();
+  const { data: disputes } = useQuery({ queryKey: ["admin-disputes"], queryFn: adminApi.disputes });
+
+  const resolve = async (id: string, status: string) => {
+    try {
+      await adminApi.resolveDispute(id, status);
+      toast.success(status === "resolved" ? "Dispute resolved" : "Dispute dismissed");
+      await qc.invalidateQueries({ queryKey: ["admin-disputes"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Consumer-reported disputes about product authenticity.
+      </p>
+      {(!disputes || disputes.length === 0) && <p className="text-sm text-muted-foreground">No open disputes.</p>}
+      <div className="space-y-3">
+        {disputes?.map((d: any) => (
+          <div key={d.id} className="rounded-md border border-madder/40 bg-madder/5 p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-primary">{d.product_id}</p>
+                <p className="text-sm text-muted-foreground">{d.reason}</p>
+                {d.reporter_contact && <p className="text-xs text-muted-foreground">Reporter: {d.reporter_contact}</p>}
+                <p className="mt-1 text-xs text-muted-foreground">Status: {d.status}</p>
+              </div>
+              {d.status === "open" && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="gold" onClick={() => resolve(d.id, "resolved")}>Resolve</Button>
+                  <Button size="sm" variant="outline" onClick={() => resolve(d.id, "dismissed")}>Dismiss</Button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
