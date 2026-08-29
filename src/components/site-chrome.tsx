@@ -25,6 +25,7 @@ import {
   Moon,
   Palette,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -112,6 +113,25 @@ function ThemeToggleBtn({ light = false }: { light?: boolean }) {
       {icons[theme]}
       <span className="hidden sm:inline">{labels[theme]}</span>
     </button>
+  );
+}
+
+function NotificationsBadge() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const token = localStorage.getItem("tantuve-token");
+    if (!token) return;
+    fetch("/api/notifications", { headers: { Authorization: "Bearer " + token } })
+      .then((r) => r.json())
+      .then((data: any[]) => setCount(data.filter((n: any) => !n.read).length))
+      .catch(() => {});
+  }, []);
+  if (count === 0) return null;
+  return (
+    <span className="relative flex h-2 w-2">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-madder opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-madder" />
+    </span>
   );
 }
 
@@ -230,6 +250,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
 
           {session && role ? (
             <>
+              <NotificationsBadge />
               <Button
                 asChild
                 variant={transparent ? "outlineLight" : "outline"}
