@@ -9,24 +9,37 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatedCounter } from "@/components/animated-counter";
 
-const VERIFICATION_EVENTS = [
-  { product: "TNT-JPCR-QXS4", craft: "Patan Patola", action: "verified in Surat" },
-  { product: "TNT-DG7M-JY6Z", craft: "Sambalpuri ikat", action: "scanned in Bhubaneswar" },
-  { product: "TNT-6M3U-YSAF", craft: "Kanjivaram silk", action: "delivered in Chennai" },
-  { product: "TNT-9D4L-2WRE", craft: "Pochampalli ikat", action: "authenticated in Hyderabad" },
-];
-
 function Ticker() {
+  const [events, setEvents] = useState<Array<{ product: string; craft: string; action: string }>>([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((i) => (i + 1) % VERIFICATION_EVENTS.length);
-    }, 3500);
-    return () => clearInterval(interval);
+    fetch("/api/explore")
+      .then((r) => r.json())
+      .then((data: any[]) => {
+        const mapped = data.slice(0, 8).map((p: any) => ({
+          product: p.id || p.title || "",
+          craft: p.craft_type || "",
+          action: p.status === "completed" ? "verified" : p.status === "with_retailer" ? "listed" : "registered",
+        }));
+        setEvents(mapped.length > 0 ? mapped : [
+          { product: "Loading...", craft: "", action: "fetching products" },
+        ]);
+      })
+      .catch(() => {
+        setEvents([{ product: "Tantuve", craft: "", action: "connected" }]);
+      });
   }, []);
 
-  const event = VERIFICATION_EVENTS[index];
+  useEffect(() => {
+    if (events.length <= 1) return;
+    const interval = setInterval(() => {
+      setIndex((i) => (i + 1) % events.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [events.length]);
+
+  const event = events[index] || events[0];
 
   return (
     <div className="flex items-center gap-2 overflow-hidden h-5">
