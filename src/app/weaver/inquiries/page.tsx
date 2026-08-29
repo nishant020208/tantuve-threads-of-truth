@@ -48,7 +48,7 @@ export default function WeaverInquiriesPage() {
                 <div>
                   <p className="font-medium text-primary text-sm">{inq.products?.title || inq.product_id}</p>
                   <p className="text-xs text-muted-foreground mt-1">{inq.message}</p>
-                  <p className="text-xs text-muted-foreground mt-2">Contact: {inq.contact_info} · {new Date(inq.submitted_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-muted-foreground mt-2">Contact: {inq.contact_info}   {new Date(inq.submitted_at).toLocaleDateString()}</p>
                 </div>
                 {!inq.read && <Button size="sm" variant="ghost" onClick={() => markRead([inq.id])}>Mark read</Button>}
               </div>
