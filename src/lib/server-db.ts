@@ -14,3 +14,30 @@ export function getServerClient(): SupabaseClient {
   client = createClient(url, key);
   return client;
 }
+
+
+/**
+ * Create a notification for a user.
+ * Non-blocking: errors are logged but don't throw.
+ */
+export async function createNotification(
+  userId: string,
+  type: string,
+  title: string,
+  body: string,
+  link?: string,
+) {
+  try {
+    const client = getServerClient();
+    await client.from("notifications").insert({
+      user_id: userId,
+      type,
+      title,
+      body,
+      link: link || null,
+      read: false,
+    });
+  } catch (err) {
+    console.warn("Failed to create notification:", err);
+  }
+}
