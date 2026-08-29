@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createNotification } from "@/lib/server-db";
 import { getServerClient } from "@/lib/server-db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 

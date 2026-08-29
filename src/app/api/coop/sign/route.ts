@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
-import { getServerClient } from "@/lib/server-db";
+import { getServerClient, createNotification } from "@/lib/server-db";
 
 // Co-op officer counter-signs a product (trust_level 1 -> 2)
 export async function POST(req: NextRequest) {
