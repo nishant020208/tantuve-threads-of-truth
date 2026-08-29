@@ -48,6 +48,14 @@ export async function POST(
     );
   }
 
+  // Corrupt image detection: minimum base64 size
+  if (body.photo_base64.length < 500) {
+    return NextResponse.json(
+      { detail: "Image appears corrupt or empty. Please upload a valid photograph." },
+      { status: 400 },
+    );
+  }
+
   // Verify image via Cerebras AI
   let imageVerification = null;
   try {
