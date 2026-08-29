@@ -58,11 +58,33 @@ export async function GET(req: NextRequest) {
         disputeCount: disputedCount,
         resolvedDisputeCount: resolvedDisputes,
         score,
+        badges: [] as string[],
       };
     });
 
     // Sort by score descending
     scored.sort((a: any, b: any) => b.score - a.score);
+
+    // Compute badges for each weaver at read time
+    for (const w of scored) {
+      const badges: string[] = [];
+      const productCount = (products || []).filter((p: any) => p.weaver_id === w.id && p.status === "completed").length;
+      if (productCount >= 50) badges.push("50 Products Verified");
+      else if (productCount >= 10) badges.push("10 Products Verified");
+      else if (productCount >= 1) badges.push("First Product");
+
+      const hasConfirmedDispute = (disputes || []).some((d: any) => {
+        const prod = (products || []).find((p: any) => p.id === d.product_id);
+        return prod?.weaver_id === w.id && d.status === "confirmed";
+      });
+      if (!hasConfirmedDispute && productCount > 0) badges.push("Zero Disputes");
+
+      const sortedByDate = [...scored].sort((a: any, b: any) => new Date(a.created_at || "2099").getTime() - new Date(b.created_at || "2099").getTime());
+      const idx = sortedByDate.findIndex((s: any) => s.id === w.id);
+      if (idx >= 0 && idx < 3) badges.push("Founding Weaver");
+
+      w.badges = badges;
+    }
 
     // Spotlight = highest score weaver
     const spotlight = scored.length > 0 ? scored[0] : null;
