@@ -8,10 +8,11 @@ export async function GET(req: NextRequest) {
 
   const client = getServerClient();
 
-  const [products, weavers, retailers] = await Promise.all([
+  const [products, weavers, retailers, disputes] = await Promise.all([
     client.from("products").select("id, status"),
     client.from("weavers").select("id, status"),
     client.from("retailers").select("id, request_status"),
+    client.from("disputes").select("id, status").eq("status", "open"),
   ]);
 
   const totalProducts = products.count || products.data?.length || 0;
@@ -36,5 +37,6 @@ export async function GET(req: NextRequest) {
     totalRetailers,
     pendingRetailers,
     totalEntries,
+    openDisputes: disputes.count || disputes.data?.length || 0,
   });
 }
