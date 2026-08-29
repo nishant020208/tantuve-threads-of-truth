@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export default function WeaverPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      const res = await weaverApi.createProduct(form);
+      const res = await weaverApi.createProduct({ ...form, custom_fields: customFieldValues });
       toast.success(`Textile registered — ${res.productId}`);
       setForm({ title: "", craft_type: "", yarn_source: "", lot_id: "" });
       setSelected(res.productId);
@@ -63,6 +63,20 @@ export default function WeaverPage() {
   };
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [customFields, setCustomFields] = useState<Array<{ name: string; label: string; type: string }>>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+
+  // Fetch custom fields when craft type changes
+  useEffect(() => {
+    if (!form.craft_type) { setCustomFields([]); return; }
+    fetch("/api/gi-registry/custom-fields?craft_type=" + encodeURIComponent(form.craft_type))
+      .then((r) => r.json())
+      .then((data: any[]) => {
+        const cf = data.find((d: any) => d.craft_type === form.craft_type);
+        setCustomFields(cf?.custom_fields || []);
+      })
+      .catch(() => setCustomFields([]));
+  }, [form.craft_type]);
   const [stepBusy, setStepBusy] = useState<string | null>(null);
   const [stepStatus, setStepStatus] = useState<Record<string, { uploading: boolean; verifying: boolean }>>({});
   const [chainBusy, setChainBusy] = useState(false);
@@ -185,6 +199,30 @@ export default function WeaverPage() {
                   <Label htmlFor="lot">Batch / lot ID</Label>
                   <Input id="lot" value={form.lot_id} onChange={(e) => setForm({ ...form, lot_id: e.target.value })} />
                 </div>
+                {customFields.map((field) => (
+                  <div key={field.name}>
+                    <Label htmlFor={field.name}>{field.label}</Label>
+                    {field.type === "select" ? (
+                      <select
+                        id={field.name}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        value={customFieldValues[field.name] || ""}
+                        onChange={(e) => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                      >
+                        <option value="">Select...</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    ) : (
+                      <Input
+                        id={field.name}
+                        type={field.type === "number" ? "number" : "text"}
+                        value={customFieldValues[field.name] || ""}
+                        onChange={(e) => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                      />
+                    )}
+                  </div>
+                ))}
                 <Button type="submit" variant="madder" disabled={busy}>
                   {busy ? "Registering…" : "Register textile"}
                 </Button>

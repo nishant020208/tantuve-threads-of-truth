@@ -73,7 +73,7 @@ interface CompleteProductResponse {
 
 export const weaverApi = {
   products: () => apiFetch<WeaverProduct[]>("/weaver/products"),
-  createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string }) =>
+  createProduct: (data: { title: string; craft_type: string; yarn_source?: string; lot_id?: string; custom_fields?: Record<string, string> }) =>
     apiFetch<{ productId: string }>("/weaver/products", { method: "POST", body: JSON.stringify(data) }),
   getProduct: (id: string) => apiFetch<WeaverProduct>(`/weaver/products/${id}`),
   appendStep: (productId: string, data: { step_name: string; step_data?: Record<string, string>; actor?: string; photo_base64?: string; photo_mime?: string }) =>
