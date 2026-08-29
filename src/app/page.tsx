@@ -62,7 +62,7 @@ export default function Index() {
       <SiteHeader transparent={false} />
 
       {/* HERO: Provenance Passport */}
-      <section className="relative overflow-hidden woven-bg" style={{ backgroundColor: "#F3EADD" }}>
+      <section className="relative overflow-hidden woven-bg" style={{ backgroundColor: "var(--background)" }}>
         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(243,234,173,0) 0%, rgba(184,134,11,0.04) 50%, rgba(107,23,50,0.03) 100%)" }} />
 
         <div className="absolute top-8 right-[15%] opacity-[0.12] pointer-events-none hidden lg:block" style={{ transform: "rotate(-12deg)" }}>
@@ -77,19 +77,19 @@ export default function Index() {
 
         <div className="relative mx-auto max-w-7xl px-4 pt-20 pb-16 sm:px-6 lg:grid lg:grid-cols-[1fr_420px] lg:gap-8 lg:pt-28 lg:pb-20 xl:grid-cols-[1fr_480px]">
           <div className="relative z-10">
-            <p className="text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "#6B1732", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0s forwards" }}>
+            <p className="text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "var(--madder)", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0s forwards" }}>
               {getString(lang, "hero_eyebrow")}
             </p>
-            <div className="mt-4 h-px w-16" style={{ backgroundColor: "#B8860B", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.12s forwards" }} />
+            <div className="mt-4 h-px w-16" style={{ backgroundColor: "var(--gold)", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.12s forwards" }} />
             <h1 className="mt-6 font-serif font-bold leading-[1.05] tracking-tight" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards" }}>
-              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "#22283c" }}>
+              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "var(--foreground)" }}>
                 {getString(lang, "hero_title_1")}
               </span>
-              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "#6B1732", textShadow: "1px 2px 0 rgba(184,134,11,0.15), 0 0 40px rgba(184,134,11,0.08)" }}>
+              <span className="block text-[clamp(2.2rem,5.5vw,4.2rem)]" style={{ color: "var(--madder)", textShadow: "1px 2px 0 rgba(184,134,11,0.15), 0 0 40px rgba(184,134,11,0.08)" }}>
                 {getString(lang, "hero_title_2")}
               </span>
             </h1>
-            <p className="mt-6 max-w-lg text-[15px] leading-relaxed" style={{ color: "#5C5346", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.45s forwards" }}>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed" style={{ color: "var(--muted-foreground)", opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.45s forwards" }}>
               {getString(lang, "hero_sub")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3" style={{ opacity: 0, transform: "translateY(16px)", animation: "hero-stagger 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s forwards" }}>
@@ -121,12 +121,12 @@ export default function Index() {
       </section>
 
       {/* Provenance trail */}
-      <section className="border-y" style={{ borderColor: "#D5CFC0", backgroundColor: "#F3EADD" }}>
+      <section className="border-y" style={{ borderColor: "var(--border)", backgroundColor: "var(--background)" }}>
         <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
           <ScrollReveal>
-            <p className="text-center text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "#6B1732" }}>The journey of a verified textile</p>
-            <h2 className="mt-3 text-center font-serif text-2xl font-bold" style={{ color: "#22283c" }}>From loom to your hands</h2>
-            <p className="mt-2 text-center text-sm" style={{ color: "#6B6456" }}>Hover each step to see what the ledger records at that stage.</p>
+            <p className="text-center text-[11px] uppercase tracking-[0.35em] font-medium" style={{ color: "var(--madder)" }}>The journey of a verified textile</p>
+            <h2 className="mt-3 text-center font-serif text-2xl font-bold" style={{ color: "var(--foreground)" }}>From loom to your hands</h2>
+            <p className="mt-2 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>Hover each step to see what the ledger records at that stage.</p>
           </ScrollReveal>
           <ProvenanceTrail className="mt-10" />
         </div>
@@ -148,7 +148,7 @@ export default function Index() {
               { icon: Landmark, title: "GI authority oversees", body: "Registered crafts, weaver approvals and counterfeit disputes handled by the authority.", accent: "#6B1732" },
             ].map((c, i) => (
               <ScrollReveal key={c.title} delay={i * 100}>
-                <div className="rounded-md border p-6 h-full transition-all duration-300 hover:shadow-lg" style={{ borderColor: "#D5CFC0", backgroundColor: "#FAF7F0" }}>
+                <div className="rounded-md border p-6 h-full transition-all duration-300 hover:shadow-lg" style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}>
                   <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: c.accent + "10" }}>
                     <c.icon className="h-4 w-4" style={{ color: c.accent }} />
                   </div>
