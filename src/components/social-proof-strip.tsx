@@ -39,7 +39,7 @@ function Ticker() {
     return () => clearInterval(interval);
   }, [events.length]);
 
-  const event = events[index] || events[0];
+  const event = events[index] || events[0] || { product: "Loading...", craft: "", action: "" };
 
   return (
     <div className="flex items-center gap-2 overflow-hidden h-5">
