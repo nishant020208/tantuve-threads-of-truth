@@ -3,6 +3,41 @@ import { getServerClient } from "@/lib/server-db";
 import { sha256Hex, canonicalPayload, GENESIS } from "@/lib/chain";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
+
+const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
+
+async function generateOriginStory(weaver: any, product: any, entries: any[]): Promise<string | null> {
+  if (!CEREBRAS_API_KEY) return null;
+
+  try {
+    const stepList = entries.map((e: any) => e.step_name.replace(/_/g, ' ')).join(', ');
+    const craftType = product.craft_type || 'handloom';
+    const weaverName = weaver?.name || 'an artisan';
+    const region = weaver?.region || 'India';
+    const prompt = 'Write a 2-3 sentence poetic narrative about the creation of a ' + craftType + ' textile woven by ' + weaverName + ' from ' + region + '. The production steps were: ' + stepList + '. Write in an evocative, warm tone suitable for a certificate of authenticity. Do not use markdown formatting.';
+
+    const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + CEREBRAS_API_KEY,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 200,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ productId: string }> },
@@ -190,12 +225,18 @@ export async function GET(
       }
     }
 
+    // Generate AI origin story (non-blocking, graceful degradation)
+    let originStory: string | null = null;
+    try {
+      originStory = await generateOriginStory(weaver, product, entries || []);
+    } catch { /* origin story is optional */ }
+
     return NextResponse.json({
       product,
       entries: entries || [],
       weaver,
       gi,
-      originStory: null,
+      originStory,
       scanAnomaly,
       scanAnomalyDetail,
       firstScanClaimed,
