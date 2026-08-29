@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { QrPanel, useQrDataUrl, verifyUrl } from "@/components/qr-panel";
 import { publicApi } from "@/lib/api";
+import { useSession } from "@/lib/session";
 import { verifyChain, type ChainEntry } from "@/lib/chain";
 import { downloadCertificate } from "@/lib/certificate";
 import { NfcVerify } from "@/components/nfc-verify";
@@ -45,6 +46,7 @@ export default function VerifyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const { lang } = useSession();
   const [chainData, setChainData] = useState<{ ledgerHash: string; timestamp: number; writer: string; exists: boolean } | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
   const qr = useQrDataUrl(verifyUrl(productId), 220);
