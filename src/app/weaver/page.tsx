@@ -276,7 +276,7 @@ export default function WeaverPage() {
                               disabled={logged.has(s.key) || stepBusy === s.key || !photoFile}
                               onClick={() => logStep(p.id, s.key, s.label)}
                             >
-                              {stepBusy === s.key ? "Uploading…" : logged.has(s.key) ? "✓ " + s.label : "Log " + s.label}
+                              {stepBusy === s.key ? "Verifying…" : logged.has(s.key) ? "✓ " + s.label : "Log " + s.label}
                             </Button>
                           ))}
                         </div>
