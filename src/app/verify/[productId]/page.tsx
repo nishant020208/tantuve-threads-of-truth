@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { QrPanel, useQrDataUrl, verifyUrl } from "@/components/qr-panel";
 import { publicApi } from "@/lib/api";
+import { getString } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { verifyChain, type ChainEntry } from "@/lib/chain";
 import { downloadCertificate } from "@/lib/certificate";
@@ -119,7 +120,7 @@ export default function VerifyPage() {
     );
   }
 
-  const { product, entries, weaver, gi, ipfsCid, ipfsUrl, ipfsVerified, ipfsDegraded, scanAnomaly, scanAnomalyDetail, firstScanClaimed, firstScanInfo } = data;
+  const { product, entries, weaver, gi, originStory, ipfsCid, ipfsUrl, ipfsVerified, ipfsDegraded, scanAnomaly, scanAnomalyDetail, firstScanClaimed, firstScanInfo } = data;
   const finalResult = browserResult;
 
   const handleDownload = async () => {
@@ -264,7 +265,7 @@ export default function VerifyPage() {
 
           {weaver && (
             <div className="mt-4 rounded-md border border-border bg-card p-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Woven by</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">{getString(lang, "woven_by")}</p>
               <p className="mt-1 font-display text-lg text-primary">{weaver.name}</p>
               {weaver.region && <p className="text-sm text-muted-foreground">{weaver.region}</p>}
               {gi && (
@@ -272,11 +273,30 @@ export default function VerifyPage() {
                   GI-registered {gi.craft_type} · {gi.region}
                 </p>
               )}
+              {product.trust_level && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    product.trust_level >= 3 ? "bg-teal/10 text-teal" :
+                    product.trust_level >= 2 ? "bg-gold/10 text-gold" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    Trust Level {product.trust_level} — {product.trust_level >= 3 ? "GI Inspector Verified" : product.trust_level >= 2 ? "Co-op Verified" : "Self-declared"}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI Origin Story */}
+          {originStory && (
+            <div className="mt-4 rounded-md border border-gold/30 bg-gold/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-gold font-medium">Origin Story</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground italic">{originStory}</p>
             </div>
           )}
 
           {/* Production timeline */}
-          <h2 className="mt-8 font-display text-xl text-primary">Production journey</h2>
+          <h2 className="mt-8 font-display text-xl text-primary">{getString(lang, "timeline")}</h2>
           <div className="mt-4 space-y-4">
             {entries.map((entry: any) => (
               <div key={entry.id} className="relative flex gap-3">
